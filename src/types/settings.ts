@@ -3,6 +3,7 @@ export interface Settings {
   theme: "light" | "dark" | "auto";
   provider: "claude";
   apiKey: string;
+  baseUrl: string;
 }
 
 export interface SettingsStatus {

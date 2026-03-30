@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "../../lib/tauri";
 import { ChatWindow } from "../ChatWindow";
 
-vi.mock("@tauri-apps/api/core", () => ({
+vi.mock("../../lib/tauri", () => ({
   invoke: vi.fn(),
 }));
 
@@ -87,6 +87,7 @@ describe("ChatWindow", () => {
 
     await waitFor(() => {
       expect(screen.getByText("mock reply")).toBeInTheDocument();
+      expect(screen.getByText("Claude 回复")).toBeInTheDocument();
     });
     await waitFor(() => {
       expect(screen.queryByText("正在思考...")).not.toBeInTheDocument();
@@ -108,6 +109,8 @@ describe("ChatWindow", () => {
       expect(
         screen.getByText("哎呀，我有点小迷糊，能再说一遍吗？"),
       ).toBeInTheDocument();
+      expect(screen.getAllByText("Fallback 回复").length).toBeGreaterThan(0);
+      expect(screen.getByText("boom")).toBeInTheDocument();
     });
   });
 

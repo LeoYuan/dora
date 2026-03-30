@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "../../lib/tauri";
 import { MemoPad } from "../MemoPad";
 
-vi.mock("@tauri-apps/api/core", () => ({
+vi.mock("../../lib/tauri", () => ({
   invoke: vi.fn(),
 }));
 

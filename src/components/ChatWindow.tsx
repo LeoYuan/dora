@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "../lib/tauri";
 import type { ChatMessage } from "../types/chat";
 
 interface ChatWindowProps {
@@ -11,6 +11,8 @@ const WELCOME_MESSAGE: ChatMessage = {
   role: "assistant",
   content: "你好呀！我是 Dora，你的桌面小伙伴～有什么我可以帮你的吗？",
   timestamp: new Date().toISOString(),
+  source: "fallback",
+  debugError: null,
 };
 
 export function ChatWindow({ onClose }: ChatWindowProps) {
@@ -52,19 +54,11 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
     ]);
   };
 
-  const appendAssistantMessage = (content: string) => {
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `${Date.now()}-assistant`,
-        role: "assistant",
-        content,
-        timestamp: new Date().toISOString(),
-      },
-    ]);
+  const appendAssistantMessage = (message: ChatMessage) => {
+    setMessages((prev) => [...prev, message]);
   };
 
-  const appendFallbackMessage = () => {
+  const appendFallbackMessage = (debugError?: string | null) => {
     setMessages((prev) => [
       ...prev,
       {
@@ -72,8 +66,38 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
         role: "assistant",
         content: "哎呀，我有点小迷糊，能再说一遍吗？",
         timestamp: new Date().toISOString(),
+        source: "fallback",
+        debugError: debugError ?? null,
       },
     ]);
+  };
+
+  const getErrorMessage = (error: unknown) => {
+    if (typeof error === "string" && error.trim()) return error;
+    if (error instanceof Error && error.message.trim()) return error.message;
+    return "Claude 请求失败，已回退到本地回复。";
+  };
+
+  const normalizeAssistantReply = (response: string | ChatMessage): ChatMessage => {
+    if (typeof response === "string") {
+      return {
+        id: `${Date.now()}-assistant`,
+        role: "assistant",
+        content: response,
+        timestamp: new Date().toISOString(),
+        source: "claude",
+        debugError: null,
+      };
+    }
+
+    return {
+      id: response.id || `${Date.now()}-assistant`,
+      role: "assistant",
+      content: response.content,
+      timestamp: response.timestamp || new Date().toISOString(),
+      source: response.source ?? "claude",
+      debugError: response.debugError ?? null,
+    };
   };
 
   const handleSend = async () => {
@@ -93,14 +117,14 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
     setIsLoading(true);
 
     try {
-      const response = await invoke<string>("chat", {
+      const response = await invoke<string | ChatMessage>("chat", {
         message: content,
         history,
       });
 
-      appendAssistantMessage(response);
-    } catch {
-      appendFallbackMessage();
+      appendAssistantMessage(normalizeAssistantReply(response));
+    } catch (error) {
+      appendFallbackMessage(getErrorMessage(error));
     } finally {
       setIsLoading(false);
       requestAnimationFrame(() => {
@@ -156,6 +180,14 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
                 }`}
               >
                 <p className="text-sm leading-relaxed">{message.content}</p>
+                {message.role === "assistant" && message.source ? (
+                  <p className="mt-2 text-[11px] font-medium opacity-60">
+                    {message.source === "claude" ? "Claude 回复" : "Fallback 回复"}
+                  </p>
+                ) : null}
+                {message.role === "assistant" && message.debugError ? (
+                  <p className="mt-1 text-[11px] opacity-60">{message.debugError}</p>
+                ) : null}
                 <span className="mt-1 block text-xs opacity-50">
                   {new Date(message.timestamp).toLocaleTimeString([], {
                     hour: "2-digit",

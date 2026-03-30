@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 
 interface AvatarProps {
   onClick: () => void;
-  onMemoClick: () => void;
 }
 
-export function Avatar({ onClick, onMemoClick }: AvatarProps) {
+export function Avatar({ onClick }: AvatarProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [blink, setBlink] = useState(false);
   const [showHint, setShowHint] = useState(false);
@@ -40,23 +39,6 @@ export function Avatar({ onClick, onMemoClick }: AvatarProps) {
         <div className="relative mb-2 rounded-2xl bg-white/90 px-3 py-2 text-sm text-gray-700 shadow-lg backdrop-blur-sm">
           和我聊聊吧~
           <div className="absolute -bottom-1 right-8 h-3 w-3 rotate-45 bg-white/90" />
-        </div>
-      )}
-
-      {isHovered && (
-        <div className="mb-2 flex gap-2">
-          <button
-            type="button"
-            aria-label="Open Dora memos"
-            onClick={(event) => {
-              event.stopPropagation();
-              onMemoClick();
-            }}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-400 shadow-lg transition-all hover:scale-110 hover:bg-yellow-500"
-            title="便签"
-          >
-            <span className="text-lg">📝</span>
-          </button>
         </div>
       )}
 

@@ -1,5 +1,6 @@
 mod settings;
 mod storage;
+mod windowing;
 
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -7,7 +8,13 @@ use std::{fs, path::PathBuf, sync::Mutex};
 use tauri::{Manager, State};
 
 use settings::{
-    get_settings, get_settings_status, resolve_settings_api_key, save_settings, SettingsState,
+    get_settings, get_settings_status, resolve_settings_api_key, save_settings,
+    settings_messages_endpoint, test_api_key, SettingsState,
+};
+use windowing::{
+    attach_main_close_behavior, hide_floating_window_command, quit_app_command, setup_tray,
+    show_floating_window_command, show_main_window_command, toggle_floating_window_command,
+    FloatingWindowState,
 };
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -34,6 +41,145 @@ pub struct ChatMessage {
     role: String,
     content: String,
     timestamp: String,
+    source: Option<String>,
+    debug_error: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct ChatReply {
+    content: String,
+    source: String,
+    debug_error: Option<String>,
+}
+
+impl ChatReply {
+    fn claude(content: String) -> Self {
+        Self {
+            content,
+            source: "claude".to_string(),
+            debug_error: None,
+        }
+    }
+
+    fn fallback(content: String, debug_error: String) -> Self {
+        Self {
+            content,
+            source: "fallback".to_string(),
+            debug_error: Some(debug_error),
+        }
+    }
+}
+
+impl From<ChatReply> for ChatMessage {
+    fn from(reply: ChatReply) -> Self {
+        Self {
+            id: format!("{}-assistant", reply.content.len()),
+            role: "assistant".to_string(),
+            content: reply.content,
+            timestamp: String::new(),
+            source: Some(reply.source),
+            debug_error: reply.debug_error,
+        }
+    }
+}
+
+impl ChatMessage {
+    fn user(content: &str) -> Self {
+        Self {
+            id: format!("{}-user", content.len()),
+            role: "user".to_string(),
+            content: content.to_string(),
+            timestamp: String::new(),
+            source: None,
+            debug_error: None,
+        }
+    }
+}
+
+fn fallback_reply() -> String {
+    "哎呀，我有点小迷糊，能再说一遍吗？".to_string()
+}
+
+fn append_fallback_reply(debug_error: String) -> ChatReply {
+    ChatReply::fallback(fallback_reply(), debug_error)
+}
+
+fn build_assistant_message(reply: ChatReply) -> ChatMessage {
+    reply.into()
+}
+
+fn build_user_message(message: &str) -> ChatMessage {
+    ChatMessage::user(message)
+}
+
+async fn extract_visible_error(response: reqwest::Response, status: reqwest::StatusCode) -> Result<String, String> {
+    let body = response.text().await.unwrap_or_default();
+    if body.trim().is_empty() {
+        Err(format!("anthropic request failed: {}", status))
+    } else {
+        Err(format!("anthropic request failed: {} - {}", status, body))
+    }
+}
+
+fn validate_claude_text(text: String) -> Result<String, String> {
+    if text.trim().is_empty() {
+        Err("missing text response".to_string())
+    } else {
+        Ok(text)
+    }
+}
+
+fn parse_claude_response(response_body: ClaudeResponse) -> Result<String, String> {
+    response_body
+        .content
+        .into_iter()
+        .find(|item| item.content_type == "text")
+        .and_then(|item| item.text)
+        .ok_or_else(|| "missing text response".to_string())
+        .and_then(validate_claude_text)
+}
+
+fn build_claude_success_reply(content: String) -> ChatReply {
+    ChatReply::claude(content)
+}
+
+fn build_fallback_reply(error: String) -> ChatReply {
+    append_fallback_reply(error)
+}
+
+fn reply_or_fallback(result: Result<String, String>) -> ChatReply {
+    match result {
+        Ok(content) => build_claude_success_reply(content),
+        Err(error) => build_fallback_reply(error),
+    }
+}
+
+fn is_assistant_role(role: &str) -> bool {
+    role == "assistant"
+}
+
+fn is_user_or_assistant(role: &str) -> bool {
+    role == "user" || role == "assistant"
+}
+
+fn chat_message_to_claude_message(chat: ChatMessage) -> ClaudeMessage {
+    ClaudeMessage {
+        role: if is_assistant_role(&chat.role) {
+            "assistant".to_string()
+        } else {
+            "user".to_string()
+        },
+        content: chat.content,
+    }
+}
+
+fn persist_chat_reply(
+    state: &State<AppState>,
+    user_message: ChatMessage,
+    assistant_message: ChatMessage,
+) -> Result<(), String> {
+    update_chat_history(state, user_message, assistant_message)
 }
 
 pub struct AppState {
@@ -107,23 +253,6 @@ fn update_chat_history(
     persist_chat_history(&state.chat_history_path, &history)
 }
 
-fn append_assistant_message(content: String) -> ChatMessage {
-    ChatMessage {
-        id: format!("{}-assistant", content.len()),
-        role: "assistant".to_string(),
-        content,
-        timestamp: String::new(),
-    }
-}
-
-fn append_user_message(message: &str) -> ChatMessage {
-    ChatMessage {
-        id: format!("{}-user", message.len()),
-        role: "user".to_string(),
-        content: message.to_string(),
-        timestamp: String::new(),
-    }
-}
 
 fn update_memo_in_list(memos: &mut [Memo], memo: &Memo) {
     if let Some(existing) = memos.iter_mut().find(|current| current.id == memo.id) {
@@ -135,7 +264,7 @@ fn build_claude_messages(history: &[ChatMessage], message: &str) -> Vec<ClaudeMe
     let mut messages = history
         .iter()
         .rev()
-        .filter(|chat| chat.role == "user" || chat.role == "assistant")
+        .filter(|chat| is_user_or_assistant(&chat.role))
         .take(8)
         .cloned()
         .collect::<Vec<_>>();
@@ -143,10 +272,7 @@ fn build_claude_messages(history: &[ChatMessage], message: &str) -> Vec<ClaudeMe
 
     let mut claude_messages = messages
         .into_iter()
-        .map(|chat| ClaudeMessage {
-            role: chat.role,
-            content: chat.content,
-        })
+        .map(chat_message_to_claude_message)
         .collect::<Vec<_>>();
     claude_messages.push(ClaudeMessage {
         role: "user".to_string(),
@@ -182,7 +308,7 @@ async fn create_claude_reply(
 
     let client = Client::new();
     let response = client
-        .post("https://api.anthropic.com/v1/messages")
+        .post(settings_messages_endpoint(&settings))
         .header("content-type", "application/json")
         .header("x-api-key", api_key)
         .header("anthropic-version", "2023-06-01")
@@ -191,28 +317,21 @@ async fn create_claude_reply(
         .await
         .map_err(|error| error.to_string())?;
 
-    if !response.status().is_success() {
-        return Err(format!("anthropic request failed: {}", response.status()));
+    let status = response.status();
+    if !status.is_success() {
+        return extract_visible_error(response, status).await;
     }
 
     let response_body: ClaudeResponse = response.json().await.map_err(|error| error.to_string())?;
-    response_body
-        .content
-        .into_iter()
-        .find(|item| item.content_type == "text")
-        .and_then(|item| item.text)
-        .filter(|text| !text.trim().is_empty())
-        .ok_or_else(|| "missing text response".to_string())
+    parse_claude_response(response_body)
 }
 
 async fn resolve_chat_reply(
     state: &State<'_, AppState>,
     settings_state: &State<'_, SettingsState>,
     message: &str,
-) -> String {
-    create_claude_reply(state, settings_state, message)
-        .await
-        .unwrap_or_else(|_| generate_response(message))
+) -> ChatReply {
+    reply_or_fallback(create_claude_reply(state, settings_state, message).await)
 }
 
 fn load_memos(path: &PathBuf) -> Vec<Memo> {
@@ -275,40 +394,15 @@ async fn chat(
     settings_state: State<'_, SettingsState>,
     message: String,
     _history: Vec<ChatMessage>,
-) -> Result<String, String> {
+) -> Result<ChatReply, String> {
     let response = resolve_chat_reply(&state, &settings_state, &message).await;
-    let user_message = append_user_message(&message);
-    let assistant_message = append_assistant_message(response.clone());
-    update_chat_history(&state, user_message, assistant_message)?;
+    let user_message = build_user_message(&message);
+    let assistant_message = build_assistant_message(response.clone());
+    persist_chat_reply(&state, user_message, assistant_message)?;
     Ok(response)
 }
 
-fn generate_response(message: &str) -> String {
-    let message_lower = message.to_lowercase();
 
-    if message_lower.contains("你好") || message_lower.contains("hi") || message_lower.contains("hello") {
-        "你好呀！今天过得怎么样？".to_string()
-    } else if message_lower.contains("累") || message_lower.contains("困") || message_lower.contains("辛苦") {
-        "辛苦啦！要不要休息一下？我可以陪你聊聊天，或者帮你记个便签～".to_string()
-    } else if message_lower.contains("开心") || message_lower.contains("高兴") || message_lower.contains("棒") {
-        "太棒了！看到你开心我也跟着开心呢 ✨".to_string()
-    } else if message_lower.contains("难过") || message_lower.contains("伤心") || message_lower.contains("不开心") {
-        "抱抱你...想和我说说发生了什么吗？我会一直在这里陪着你的".to_string()
-    } else if message_lower.contains("谢谢") {
-        "不用谢呀！能帮到你我很开心 😊".to_string()
-    } else if message_lower.contains("便签") || message_lower.contains("备忘录") {
-        "需要记便签吗？点击我的铃铛图标就可以打开便签功能啦！".to_string()
-    } else {
-        let responses = [
-            "嗯嗯，我在听呢，继续说～",
-            "原来是这样啊，明白了！",
-            "哈哈，真的吗？",
-            "这个有意思！",
-            "我明白了，还有其他想聊的吗？",
-        ];
-        responses[message.len() % responses.len()].to_string()
-    }
-}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -325,6 +419,13 @@ pub fn run() {
 
             app.manage(AppState::new(memo_store_path, chat_history_path));
             app.manage(SettingsState::new(settings_store_path));
+            app.manage(FloatingWindowState::default());
+
+            let main_window = app
+                .get_webview_window("main")
+                .ok_or_else(|| "missing main window".to_string())?;
+            attach_main_close_behavior(&main_window);
+            setup_tray(app.handle())?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -337,7 +438,13 @@ pub fn run() {
             chat,
             get_settings,
             save_settings,
-            get_settings_status
+            get_settings_status,
+            test_api_key,
+            show_main_window_command,
+            show_floating_window_command,
+            hide_floating_window_command,
+            toggle_floating_window_command,
+            quit_app_command
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -345,20 +452,7 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-    use super::{build_claude_messages, generate_response, ChatMessage};
-
-    #[test]
-    fn returns_greeting_reply() {
-        assert_eq!(generate_response("你好 Dora"), "你好呀！今天过得怎么样？");
-    }
-
-    #[test]
-    fn returns_memo_hint() {
-        assert_eq!(
-            generate_response("我想记个便签"),
-            "需要记便签吗？点击我的铃铛图标就可以打开便签功能啦！"
-        );
-    }
+    use super::{build_claude_messages, ChatMessage};
 
     #[test]
     fn builds_claude_messages_from_recent_history() {
@@ -368,12 +462,16 @@ mod tests {
                 role: "user".to_string(),
                 content: "你好".to_string(),
                 timestamp: String::new(),
+                source: None,
+                debug_error: None,
             },
             ChatMessage {
                 id: "2".to_string(),
                 role: "assistant".to_string(),
                 content: "你好呀".to_string(),
                 timestamp: String::new(),
+                source: Some("claude".to_string()),
+                debug_error: None,
             },
         ];
 

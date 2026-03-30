@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "../lib/tauri";
 import type { Settings, SettingsStatus } from "../types/settings";
+
+interface ApiKeyTestResult {
+  success: boolean;
+  source: SettingsStatus["source"];
+  message: string;
+}
 
 interface SettingsPanelProps {
   onClose: () => void;
@@ -11,6 +17,7 @@ const DEFAULT_SETTINGS: Settings = {
   theme: "auto",
   provider: "claude",
   apiKey: "",
+  baseUrl: "https://api.anthropic.com",
 };
 
 const DEFAULT_STATUS: SettingsStatus = {
@@ -27,6 +34,18 @@ const SOURCE_LABELS: Record<SettingsStatus["source"], string> = {
 export function SettingsPanel({ onClose }: SettingsPanelProps) {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [status, setStatus] = useState<SettingsStatus>(DEFAULT_STATUS);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [testMessage, setTestMessage] = useState<string | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
+
+  const getErrorMessage = (error: unknown) => {
+    if (typeof error === "string" && error.trim()) return error;
+    if (error instanceof Error && error.message.trim()) return error.message;
+    return "保存失败，请稍后重试。";
+  };
 
   useEffect(() => {
     void loadSettings();
@@ -47,9 +66,42 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
   };
 
   const handleSave = async () => {
-    await invoke("save_settings", { settings });
-    const loadedStatus = await invoke<SettingsStatus>("get_settings_status");
-    setStatus(loadedStatus);
+    setIsSaving(true);
+    setSaveMessage(null);
+    setSaveError(null);
+
+    try {
+      await invoke("save_settings", { settings });
+      const loadedStatus = await invoke<SettingsStatus>("get_settings_status");
+      setStatus(loadedStatus);
+      setSaveMessage("设置已保存");
+    } catch (error) {
+      setSaveError(getErrorMessage(error));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleTestApiKey = async () => {
+    setIsTesting(true);
+    setTestMessage(null);
+    setTestError(null);
+
+    try {
+      const result = await invoke<ApiKeyTestResult>("test_api_key", {
+        apiKey: settings.apiKey,
+        baseUrl: settings.baseUrl,
+      });
+      if (result.success) {
+        setTestMessage(`测试成功（${SOURCE_LABELS[result.source]}）`);
+      } else {
+        setTestError(`${result.message}（${SOURCE_LABELS[result.source]}）`);
+      }
+    } catch (error) {
+      setTestError(getErrorMessage(error));
+    } finally {
+      setIsTesting(false);
+    }
   };
 
   const handleClearChatHistory = async () => {
@@ -154,6 +206,28 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none"
               />
             </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="settings-base-url">
+                Base URL
+              </label>
+              <input
+                id="settings-base-url"
+                aria-label="Settings base URL"
+                value={settings.baseUrl}
+                onChange={(event) =>
+                  setSettings((current) => ({
+                    ...current,
+                    baseUrl: event.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none"
+              />
+            </div>
+
+            <p className="text-xs text-slate-400">
+              当前兼容 Anthropic Messages API，可填写例如 https://code2ai.codes
+            </p>
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -162,6 +236,16 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
             <p className="mt-1 text-xs text-slate-400">
               {status.hasApiKey ? "已检测到可用 API Key" : "当前没有可用 API Key"}
             </p>
+            {isSaving ? (
+              <p className="mt-3 text-xs text-slate-500">正在保存设置...</p>
+            ) : null}
+            {saveMessage ? (
+              <p className="mt-3 text-xs font-medium text-emerald-600">{saveMessage}</p>
+            ) : null}
+            {saveError ? <p className="mt-3 text-xs font-medium text-rose-500">{saveError}</p> : null}
+            {isTesting ? <p className="mt-3 text-xs text-slate-500">正在测试 API Key...</p> : null}
+            {testMessage ? <p className="mt-3 text-xs font-medium text-emerald-600">{testMessage}</p> : null}
+            {testError ? <p className="mt-3 text-xs font-medium text-rose-500">{testError}</p> : null}
           </section>
         </div>
 
@@ -173,13 +257,24 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
           >
             清空聊天记录
           </button>
-          <button
-            type="button"
-            onClick={() => void handleSave()}
-            className="rounded-xl bg-slate-800 px-4 py-2 text-sm font-medium text-white"
-          >
-            保存设置
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => void handleTestApiKey()}
+              disabled={isTesting}
+              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isTesting ? "测试中..." : "测试 API Key"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleSave()}
+              disabled={isSaving}
+              className="rounded-xl bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSaving ? "保存中..." : "保存设置"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

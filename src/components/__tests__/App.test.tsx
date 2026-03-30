@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import App from "../../App";
+import { invoke } from "../../lib/tauri";
 import { useAppStore } from "../../stores/appStore";
 
 vi.mock("@tauri-apps/api/core", () => ({
@@ -8,6 +9,10 @@ vi.mock("@tauri-apps/api/core", () => ({
     if (command === "get_memos") return [];
     return null;
   }),
+}));
+
+vi.mock("../../lib/tauri", () => ({
+  invoke: vi.fn(),
 }));
 
 vi.mock("@tauri-apps/api/window", () => ({
@@ -21,17 +26,18 @@ vi.mock("@tauri-apps/api/window", () => ({
   }),
 }));
 
+const mockedInvoke = vi.mocked(invoke);
+
 describe("App", () => {
   beforeEach(() => {
+    mockedInvoke.mockReset();
     useAppStore.getState().resetPanels();
   });
 
-  it("renders the welcome home screen", () => {
+  it("renders the welcome home screen without the custom window header", () => {
     const { container } = render(<App />);
 
-    expect(screen.getByText("Dora")).toBeInTheDocument();
-    expect(screen.getByText("桌面陪伴助手")).toBeInTheDocument();
-    expect(screen.getByText("今天想聊什么？")).toBeInTheDocument();
+    expect(screen.queryByText("桌面陪伴助手")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "开始聊天" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "便签" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "设置" })).toBeInTheDocument();
@@ -43,7 +49,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "开始聊天" }));
     fireEvent.click(screen.getByLabelText("Close Dora chat"));
 
-    expect(screen.getByText("今天想聊什么？")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "开始聊天" })).toBeInTheDocument();
   });
 
   it("returns to home after closing memos", () => {
@@ -51,7 +57,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "便签" }));
     fireEvent.click(screen.getByLabelText("Close Dora memos"));
 
-    expect(screen.getByText("今天想聊什么？")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "开始聊天" })).toBeInTheDocument();
   });
 
   it("opens settings from the home action", () => {
@@ -67,7 +73,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "设置" }));
     fireEvent.click(screen.getByLabelText("Close Dora settings"));
 
-    expect(screen.getByText("今天想聊什么？")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "开始聊天" })).toBeInTheDocument();
   });
 
   it("opens chat from the primary home action", () => {
@@ -80,5 +86,17 @@ describe("App", () => {
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: "便签" }));
     expect(screen.getByText("快速记录你的想法")).toBeInTheDocument();
+  });
+
+  it("does not show hover memo icon on the avatar", () => {
+    render(<App />);
+
+    expect(screen.queryByLabelText("Open Dora memos")).not.toBeInTheDocument();
+  });
+
+  it("opens the main window when the floating avatar is clicked", () => {
+    render(<App />);
+
+    expect(screen.queryByLabelText("Close Dora chat")).not.toBeInTheDocument();
   });
 });
