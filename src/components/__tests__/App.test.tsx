@@ -15,17 +15,6 @@ vi.mock("../../lib/tauri", () => ({
   invoke: vi.fn(),
 }));
 
-vi.mock("@tauri-apps/api/window", () => ({
-  getCurrentWindow: () => ({
-    minimize: vi.fn(),
-    maximize: vi.fn(),
-    unmaximize: vi.fn(),
-    close: vi.fn(),
-    startDragging: vi.fn(),
-    isMaximized: vi.fn().mockResolvedValue(false),
-  }),
-}));
-
 const mockedInvoke = vi.mocked(invoke);
 
 describe("App", () => {
@@ -40,6 +29,7 @@ describe("App", () => {
     expect(screen.queryByText("桌面陪伴助手")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "开始聊天" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "便签" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "记忆" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "设置" })).toBeInTheDocument();
     expect(container.firstChild).toHaveClass("min-h-screen");
   });
@@ -60,12 +50,28 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "开始聊天" })).toBeInTheDocument();
   });
 
+  it("opens memory from the home action", () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "记忆" }));
+
+    expect(screen.getByText("管理 Dora 会长期参考的信息")).toBeInTheDocument();
+    expect(screen.getByLabelText("Close Dora memory")).toBeInTheDocument();
+  });
+
   it("opens settings from the home action", () => {
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: "设置" }));
 
     expect(screen.getByText("设置")).toBeInTheDocument();
     expect(screen.getByLabelText("Close Dora settings")).toBeInTheDocument();
+  });
+
+  it("returns to home after closing memory", () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "记忆" }));
+    fireEvent.click(screen.getByLabelText("Close Dora memory"));
+
+    expect(screen.getByRole("button", { name: "开始聊天" })).toBeInTheDocument();
   });
 
   it("returns to home after closing settings", () => {
@@ -94,9 +100,4 @@ describe("App", () => {
     expect(screen.queryByLabelText("Open Dora memos")).not.toBeInTheDocument();
   });
 
-  it("opens the main window when the floating avatar is clicked", () => {
-    render(<App />);
-
-    expect(screen.queryByLabelText("Close Dora chat")).not.toBeInTheDocument();
-  });
 });

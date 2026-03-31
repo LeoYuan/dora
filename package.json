@@ -4,8 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "tauri dev",
     "build": "tsc && vite build",
+    "build:app": "tauri build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

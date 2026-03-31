@@ -143,9 +143,8 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
   const canClearHistory = messages.some((message) => message.id !== "welcome");
 
   return (
-
-    <div className="absolute inset-4 z-40 flex items-center justify-center rounded-3xl bg-slate-900/10 p-2">
-      <div className="flex h-full w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-white bg-white shadow-2xl">
+    <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-slate-900/10">
+      <div className="flex h-full w-full max-w-xl flex-col overflow-hidden bg-white shadow-2xl">
         <div className="flex items-center justify-between bg-gradient-to-r from-[#00A0E9] to-[#0080C0] px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white">
@@ -180,20 +179,9 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
                 }`}
               >
                 <p className="text-sm leading-relaxed">{message.content}</p>
-                {message.role === "assistant" && message.source ? (
-                  <p className="mt-2 text-[11px] font-medium opacity-60">
-                    {message.source === "claude" ? "Claude 回复" : "Fallback 回复"}
-                  </p>
-                ) : null}
                 {message.role === "assistant" && message.debugError ? (
                   <p className="mt-1 text-[11px] opacity-60">{message.debugError}</p>
                 ) : null}
-                <span className="mt-1 block text-xs opacity-50">
-                  {new Date(message.timestamp).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
               </div>
             </div>
           ))}

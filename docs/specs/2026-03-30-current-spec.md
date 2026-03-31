@@ -46,6 +46,9 @@
 - [ ] REQ-20: Dora 头像 hover 时不得再出现额外操作 icon。
 - [ ] REQ-21: 前端所有 Tauri command 调用必须走统一且稳定的 invoke 入口。
 - [ ] REQ-22: 用户在项目根目录执行 `npm run tauri dev` 时必须能直接启动桌面应用。
+- [ ] REQ-22a: 用户必须可以通过 `pnpm dev` 启动 Dora 开发版。
+- [ ] REQ-22b: 用户必须可以通过 `pnpm build:app` 构建 Dora.app。
+- [ ] REQ-22c: `pnpm build` 必须只执行前端构建，不得递归触发 Tauri 打包流程。
 - [ ] REQ-23: 应用必须新增独立悬浮窗，用于常驻桌面角落展示 Dora 主入口。
 - [ ] REQ-24: 独立悬浮窗必须与主窗口分离，聊天、便签、设置仍在主窗口中承载。
 - [ ] REQ-25: 系统托盘必须提供显示/隐藏悬浮窗、打开主窗口、退出应用三个基础操作。
@@ -54,6 +57,19 @@
 - [ ] REQ-28: 从系统托盘重新打开主窗口时，必须恢复到可交互状态并置前显示。
 - [ ] REQ-29: 悬浮窗必须支持无任务栏存在感的常驻展示，避免与主窗口职责混淆。
 - [ ] REQ-30: 当前阶段不包含流式输出、多 provider 真接入、全局快捷键、Live2D 真接入、标签系统和账户体系。
+- [ ] REQ-31: 陪伴记忆必须作为独立面板管理，不得继续放在聊天界面中。
+- [ ] REQ-31a: 首页必须新增“记忆”入口，与聊天、便签、设置并列。
+- [ ] REQ-31b: 记忆面板必须允许用户查看、手动新增、删除记忆条目。
+- [ ] REQ-31c: 当焦点位于记忆输入框时，按 Enter 必须直接保存该条记忆。
+- [ ] REQ-32: 便签卡片必须支持一键加入陪伴记忆。
+- [ ] REQ-33: 设置页必须允许用户配置陪伴模式（默认陪伴 / 温柔支持 / 专注搭子），并持久化到本地 settings。
+- [ ] REQ-33a: 陪伴模式必须位于独立的“陪伴设置”区域，而不是混在 API / Base URL 等基础配置中。
+- [ ] REQ-33b: 设置页必须为每种陪伴模式展示可理解的说明文案，帮助用户区分差异。
+
+- [ ] REQ-34: Claude 聊天请求必须将陪伴模式、用户名和可见陪伴记忆注入系统提示词中。
+- [ ] REQ-34: Claude 聊天请求必须将陪伴模式、用户名和可见陪伴记忆注入系统提示词中。
+- [ ] REQ-35: 陪伴记忆必须独立持久化到应用数据目录，不得写入仓库。
+- [ ] REQ-36: 陪伴记忆能力当前阶段仅支持用户显式管理，不包含自动记忆提取或后台主动提醒.
 
 ### 2.2 Non-Functional Requirements
 
@@ -83,6 +99,9 @@
 - [ ] AC-11: Given 首页已打开, when 用户查看界面, then 不再看到自定义 `WindowHeader`。
 - [ ] AC-12: Given 鼠标移入 Dora 头像, when hover 发生, then 不再出现额外操作 icon。
 - [ ] AC-13: Given 用户位于项目根目录, when 执行 `npm run tauri dev`, then 桌面应用可直接启动。
+- [ ] AC-13a: Given 用户位于项目根目录, when 执行 `pnpm dev`, then Dora 开发版可直接启动。
+- [ ] AC-13b: Given 用户位于项目根目录, when 执行 `pnpm build:app`, then 可产出 Dora.app 构建产物。
+- [ ] AC-13c: Given 用户位于项目根目录, when 执行 `pnpm build`, then 仅执行前端构建且不会递归进入 Tauri build。
 - [ ] AC-14: Given 查看仓库需求文档, when 查找当前需求, then 仅在 `docs/specs/` 中维护，无需根目录 `REQUIREMENTS.md`。
 - [ ] AC-15: Given 应用启动完成, when 用户观察桌面, then 可看到独立悬浮窗而不是只依赖主窗口首页入口。
 - [ ] AC-16: Given 用户点击系统托盘图标, when 当前悬浮窗可见, then 悬浮窗被隐藏；反之则显示。
@@ -92,6 +111,22 @@
 - [ ] AC-20: Given 悬浮窗与主窗口同时存在, when 用户使用聊天/便签/设置, then 这些功能仍只在主窗口中打开。
 - [ ] AC-21: Given 悬浮窗显示在桌面角落, when 查看任务栏或 Dock 行为, then 悬浮窗不作为独立任务入口干扰主窗口。
 - [ ] AC-22: Given 主窗口已被关闭到托盘, when 用户从托盘重新打开, then 应用恢复到可继续使用状态。
+- [ ] AC-23: Given 用户位于首页, when 点击“记忆”, then 打开独立记忆面板而不是聊天窗口内嵌区。
+- [ ] AC-24: Given 用户在记忆面板新增陪伴记忆, when 应用重启后重新打开记忆面板, then 该记忆仍然存在。
+- [ ] AC-25: Given 用户在便签卡片上点击“记住”, when 动作完成, then 该便签内容出现在独立记忆面板中。
+- [ ] AC-26: Given 用户切换陪伴模式为“温柔支持”或“专注搭子”, when 后续发送聊天消息, then 后端构造的系统提示词包含对应模式指令。
+- [ ] AC-27: Given 旧版本 settings 文件没有 `companionMode`, when 新版本读取配置, then 自动回退为 `default`。
+- [ ] AC-28: Given 当前阶段陪伴记忆已上线, when 用户使用产品, then 不会收到后台自动提醒或自动提取出的隐式记忆。
+- [ ] AC-29: Given 用户在记忆输入框聚焦, when 按 Enter, then 当前输入内容立即保存为新记忆。
+- [ ] AC-30: Given 用户进入聊天窗口, when 查看底部输入区, then 不再看到陪伴记忆管理 UI。
+
+---
+
+## 4. Scope Boundaries
+
+---
+
+## 4. Scope Boundaries
 
 ---
 
@@ -188,6 +223,8 @@ invoke('quit_app')
 - Test 9: 便签支持新增、编辑、删除、拖拽和过滤。
 - Test 10: 首页不再渲染自定义 `WindowHeader`，头像 hover 不再出现额外 icon。
 - Test 11: 根目录执行 `npm run tauri dev` 可直接启动。
+- Test 11a: 根目录执行 `pnpm dev:app` 可直接启动 Dora 开发版。
+- Test 11b: 根目录执行 `pnpm build:app` 可直接产出 Dora.app 构建产物。
 - Test 12: 当前需求文档仅在 `docs/specs/` 中维护。
 - Test 13: 应用启动后可显示独立悬浮窗。
 - Test 14: 点击托盘图标可切换悬浮窗显示状态。

@@ -15,6 +15,12 @@ pub struct Settings {
     pub provider: String,
     pub api_key: String,
     pub base_url: String,
+    #[serde(default = "default_companion_mode")]
+    pub companion_mode: String,
+}
+
+fn default_companion_mode() -> String {
+    "default".to_string()
 }
 
 impl Default for Settings {
@@ -25,6 +31,7 @@ impl Default for Settings {
             provider: "claude".to_string(),
             api_key: String::new(),
             base_url: "https://api.anthropic.com".to_string(),
+            companion_mode: default_companion_mode(),
         }
     }
 }
@@ -208,7 +215,7 @@ pub async fn test_api_key(
 
 #[cfg(test)]
 mod tests {
-    use super::{messages_endpoint, resolve_api_key};
+    use super::{default_companion_mode, messages_endpoint, resolve_api_key, Settings};
 
     #[test]
     fn resolves_env_source_when_only_env_exists() {
@@ -252,5 +259,15 @@ mod tests {
             messages_endpoint("https://code2ai.codes/"),
             "https://code2ai.codes/v1/messages"
         );
+    }
+
+    #[test]
+    fn defaults_companion_mode_for_legacy_settings() {
+        let settings: Settings = serde_json::from_str(
+            r#"{"userName":"","theme":"auto","provider":"claude","apiKey":"","baseUrl":"https://api.anthropic.com"}"#,
+        )
+        .unwrap();
+
+        assert_eq!(settings.companion_mode, default_companion_mode());
     }
 }

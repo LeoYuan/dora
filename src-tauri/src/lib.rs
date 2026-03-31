@@ -9,12 +9,11 @@ use tauri::{Manager, State};
 
 use settings::{
     get_settings, get_settings_status, resolve_settings_api_key, save_settings,
-    settings_messages_endpoint, test_api_key, SettingsState,
+    settings_messages_endpoint, test_api_key, Settings, SettingsState,
 };
+use storage::{read_json_or_default, write_json};
 use windowing::{
-    attach_main_close_behavior, hide_floating_window_command, quit_app_command, setup_tray,
-    show_floating_window_command, show_main_window_command, toggle_floating_window_command,
-    FloatingWindowState,
+    attach_main_close_behavior, quit_app_command, setup_tray, show_main_window_command,
 };
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -26,6 +25,16 @@ pub struct Memo {
     position: Position,
     is_pinned: bool,
     created_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct CompanionMemoryItem {
+    id: String,
+    content: String,
+    source: String,
+    created_at: String,
+    is_pinned: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -187,15 +196,23 @@ pub struct AppState {
     memo_store_path: PathBuf,
     chat_history: Mutex<Vec<ChatMessage>>,
     chat_history_path: PathBuf,
+    companion_memory: Mutex<Vec<CompanionMemoryItem>>,
+    companion_memory_path: PathBuf,
 }
 
 impl AppState {
-    fn new(memo_store_path: PathBuf, chat_history_path: PathBuf) -> Self {
+    fn new(
+        memo_store_path: PathBuf,
+        chat_history_path: PathBuf,
+        companion_memory_path: PathBuf,
+    ) -> Self {
         Self {
             memos: Mutex::new(load_memos(&memo_store_path)),
             memo_store_path,
             chat_history: Mutex::new(load_chat_history(&chat_history_path)),
             chat_history_path,
+            companion_memory: Mutex::new(load_companion_memory(&companion_memory_path)),
+            companion_memory_path,
         }
     }
 }
@@ -299,10 +316,15 @@ async fn create_claude_reply(
     }
 
     let history = state.chat_history.lock().map_err(|error| error.to_string())?.clone();
+    let memory_items = state
+        .companion_memory
+        .lock()
+        .map_err(|error| error.to_string())?
+        .clone();
     let request = ClaudeRequest {
         model: "claude-opus-4-6".to_string(),
         max_tokens: 1024,
-        system: "你是 Dora，一个温暖、友善、简洁的桌面陪伴伙伴。回复要自然、简短、有温度。".to_string(),
+        system: build_companion_system_prompt(&settings, &memory_items),
         messages: build_claude_messages(&history, message),
     };
 
@@ -348,6 +370,67 @@ fn persist_memos(path: &PathBuf, memos: &[Memo]) -> Result<(), String> {
 
     let content = serde_json::to_string_pretty(memos).map_err(|error| error.to_string())?;
     fs::write(path, content).map_err(|error| error.to_string())
+}
+
+fn load_companion_memory(path: &PathBuf) -> Vec<CompanionMemoryItem> {
+    read_json_or_default(path)
+}
+
+fn persist_companion_memory(path: &PathBuf, items: &[CompanionMemoryItem]) -> Result<(), String> {
+    write_json(path, &items)
+}
+
+fn build_companion_system_prompt(settings: &Settings, memory_items: &[CompanionMemoryItem]) -> String {
+    let mode_instruction = match settings.companion_mode.as_str() {
+        "supportive" => "你要更温柔、更安抚、更有陪伴感。",
+        "focused" => "你要更像专注搭子，回应更直接、更清晰。",
+        _ => "你要保持自然、温暖、简洁。",
+    };
+
+    let user_name_instruction = if settings.user_name.trim().is_empty() {
+        String::new()
+    } else {
+        format!("用户名字是 {}。", settings.user_name.trim())
+    };
+
+    let memory_summary = memory_items
+        .iter()
+        .take(5)
+        .map(|item| format!("- {}", item.content.trim()))
+        .collect::<Vec<_>>();
+
+    if memory_summary.is_empty() {
+        format!(
+            "你是 Dora，一个温暖、友善、简洁的桌面陪伴伙伴。{}{}回复要自然、简短、有温度。",
+            mode_instruction, user_name_instruction
+        )
+    } else {
+        format!(
+            "你是 Dora，一个温暖、友善、简洁的桌面陪伴伙伴。{}{}这是你当前可见的陪伴记忆：\n{}\n回复要自然、简短、有温度。",
+            mode_instruction,
+            user_name_instruction,
+            memory_summary.join("\n")
+        )
+    }
+}
+
+#[tauri::command]
+fn get_companion_memory(state: State<AppState>) -> Vec<CompanionMemoryItem> {
+    state.companion_memory.lock().unwrap().clone()
+}
+
+#[tauri::command]
+fn save_companion_memory_item(state: State<AppState>, item: CompanionMemoryItem) -> Result<(), String> {
+    let mut items = state.companion_memory.lock().map_err(|error| error.to_string())?;
+    items.insert(0, item);
+    persist_companion_memory(&state.companion_memory_path, &items)
+}
+
+#[tauri::command]
+fn delete_companion_memory_item(state: State<AppState>, id: String) -> Result<(), String> {
+    let mut items = state.companion_memory.lock().map_err(|error| error.to_string())?;
+    items.retain(|item| item.id != id);
+    persist_companion_memory(&state.companion_memory_path, &items)
 }
 
 #[tauri::command]
@@ -416,10 +499,14 @@ pub fn run() {
             let memo_store_path = app_data_dir.join("memos.json");
             let chat_history_path = app_data_dir.join("chat-history.json");
             let settings_store_path = app_data_dir.join("settings.json");
+            let companion_memory_path = app_data_dir.join("companion-memory.json");
 
-            app.manage(AppState::new(memo_store_path, chat_history_path));
+            app.manage(AppState::new(
+                memo_store_path,
+                chat_history_path,
+                companion_memory_path,
+            ));
             app.manage(SettingsState::new(settings_store_path));
-            app.manage(FloatingWindowState::default());
 
             let main_window = app
                 .get_webview_window("main")
@@ -435,15 +522,15 @@ pub fn run() {
             update_memo,
             get_chat_history,
             clear_chat_history,
+            get_companion_memory,
+            save_companion_memory_item,
+            delete_companion_memory_item,
             chat,
             get_settings,
             save_settings,
             get_settings_status,
             test_api_key,
             show_main_window_command,
-            show_floating_window_command,
-            hide_floating_window_command,
-            toggle_floating_window_command,
             quit_app_command
         ])
         .run(tauri::generate_context!())
@@ -452,7 +539,31 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-    use super::{build_claude_messages, ChatMessage};
+    use super::{
+        build_claude_messages, build_companion_system_prompt, CompanionMemoryItem, ChatMessage,
+    };
+    use crate::settings::Settings;
+
+    fn test_settings(companion_mode: &str, user_name: &str) -> Settings {
+        Settings {
+            user_name: user_name.to_string(),
+            theme: "auto".to_string(),
+            provider: "claude".to_string(),
+            api_key: String::new(),
+            base_url: "https://api.anthropic.com".to_string(),
+            companion_mode: companion_mode.to_string(),
+        }
+    }
+
+    fn test_memory_item(content: &str) -> CompanionMemoryItem {
+        CompanionMemoryItem {
+            id: content.to_string(),
+            content: content.to_string(),
+            source: "user".to_string(),
+            created_at: String::new(),
+            is_pinned: false,
+        }
+    }
 
     #[test]
     fn builds_claude_messages_from_recent_history() {
@@ -481,5 +592,27 @@ mod tests {
         assert_eq!(messages[0].role, "user");
         assert_eq!(messages[1].role, "assistant");
         assert_eq!(messages[2].content, "今天天气怎么样");
+    }
+
+    #[test]
+    fn builds_companion_prompt_with_mode_memory_and_user_name() {
+        let prompt = build_companion_system_prompt(
+            &test_settings("supportive", "Leo"),
+            &vec![test_memory_item("喜欢喝拿铁"), test_memory_item("最近在学 Rust")],
+        );
+
+        assert!(prompt.contains("更温柔、更安抚、更有陪伴感"));
+        assert!(prompt.contains("用户名字是 Leo"));
+        assert!(prompt.contains("这是你当前可见的陪伴记忆"));
+        assert!(prompt.contains("喜欢喝拿铁"));
+        assert!(prompt.contains("最近在学 Rust"));
+    }
+
+    #[test]
+    fn builds_companion_prompt_without_memory_block_when_empty() {
+        let prompt = build_companion_system_prompt(&test_settings("focused", ""), &vec![]);
+
+        assert!(prompt.contains("更像专注搭子"));
+        assert!(!prompt.contains("这是你当前可见的陪伴记忆"));
     }
 }

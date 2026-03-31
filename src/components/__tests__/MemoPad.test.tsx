@@ -161,4 +161,34 @@ describe("MemoPad", () => {
       );
     });
   });
+
+  it("adds memo content to companion memory", async () => {
+    mockedInvoke.mockResolvedValueOnce([
+      {
+        id: "1",
+        content: "记得明天带耳机",
+        color: "yellow",
+        position: { x: 0, y: 0 },
+        isPinned: false,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+    mockedInvoke.mockResolvedValueOnce(null);
+
+    render(<MemoPad onClose={() => {}} />);
+
+    fireEvent.click(await screen.findByLabelText("Add memo 记得明天带耳机 to companion memory"));
+
+    await waitFor(() => {
+      expect(mockedInvoke).toHaveBeenCalledWith(
+        "save_companion_memory_item",
+        expect.objectContaining({
+          item: expect.objectContaining({
+            content: "记得明天带耳机",
+            source: "memo",
+          }),
+        }),
+      );
+    });
+  });
 });

@@ -18,6 +18,7 @@ const DEFAULT_SETTINGS: Settings = {
   provider: "claude",
   apiKey: "",
   baseUrl: "https://api.anthropic.com",
+  companionMode: "default",
 };
 
 const DEFAULT_STATUS: SettingsStatus = {
@@ -109,8 +110,8 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
   };
 
   return (
-    <div className="absolute inset-4 z-40 flex items-center justify-center rounded-3xl bg-slate-900/10 p-2">
-      <div className="flex h-full w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-white bg-white shadow-2xl">
+    <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-slate-900/10">
+      <div className="flex h-full w-full max-w-2xl flex-col overflow-hidden bg-white shadow-2xl">
         <div className="flex items-center justify-between bg-gradient-to-r from-slate-700 to-slate-800 px-6 py-4 text-white">
           <div>
             <h2 className="font-semibold">设置</h2>
@@ -228,6 +229,42 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
             <p className="text-xs text-slate-400">
               当前兼容 Anthropic Messages API，可填写例如 https://code2ai.codes
             </p>
+          </section>
+
+          <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div>
+              <h3 className="text-sm font-medium text-slate-700">陪伴设置</h3>
+              <p className="mt-1 text-xs text-slate-400">调整 Dora 和你互动时的默认风格。</p>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="settings-companion-mode">
+                陪伴模式
+              </label>
+              <select
+                id="settings-companion-mode"
+                aria-label="Settings companion mode"
+                value={settings.companionMode}
+                onChange={(event) =>
+                  setSettings((current) => ({
+                    ...current,
+                    companionMode: event.target.value as Settings["companionMode"],
+                  }))
+                }
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none"
+              >
+                <option value="default">默认陪伴</option>
+                <option value="supportive">温柔支持</option>
+                <option value="focused">专注搭子</option>
+              </select>
+              <p className="mt-2 text-xs text-slate-500">
+                {settings.companionMode === "default"
+                  ? "自然、平衡，适合日常聊天和大多数场景。"
+                  : settings.companionMode === "supportive"
+                    ? "更温柔、更安抚，情绪回应和鼓励感会更强。"
+                    : "更直接、更聚焦，适合推进任务和减少情绪化表达。"}
+              </p>
+            </div>
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">

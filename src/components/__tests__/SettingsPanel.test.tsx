@@ -20,6 +20,7 @@ describe("SettingsPanel", () => {
       provider: "claude",
       apiKey: "",
       baseUrl: "https://api.anthropic.com",
+      companionMode: "supportive",
     });
     mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
 
@@ -30,6 +31,7 @@ describe("SettingsPanel", () => {
     expect(screen.getByLabelText("Settings provider")).toBeInTheDocument();
     expect(screen.getByLabelText("Settings API key")).toBeInTheDocument();
     expect(screen.getByLabelText("Settings base URL")).toHaveValue("https://api.anthropic.com");
+    expect(screen.getByLabelText("Settings companion mode")).toHaveValue("supportive");
   });
 
   it("saves the configured base url", async () => {
@@ -39,6 +41,7 @@ describe("SettingsPanel", () => {
       provider: "claude",
       apiKey: "",
       baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
     });
     mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
     mockedInvoke.mockResolvedValueOnce(null);
@@ -49,12 +52,16 @@ describe("SettingsPanel", () => {
     fireEvent.change(await screen.findByLabelText("Settings base URL"), {
       target: { value: "https://code2ai.codes" },
     });
+    fireEvent.change(screen.getByLabelText("Settings companion mode"), {
+      target: { value: "focused" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "保存设置" }));
 
     await waitFor(() => {
       expect(mockedInvoke).toHaveBeenCalledWith("save_settings", {
         settings: expect.objectContaining({
           baseUrl: "https://code2ai.codes",
+          companionMode: "focused",
         }),
       });
     });
@@ -66,6 +73,8 @@ describe("SettingsPanel", () => {
       theme: "auto",
       provider: "claude",
       apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
     });
     mockedInvoke.mockResolvedValueOnce({ source: "env", hasApiKey: true });
 
@@ -81,6 +90,8 @@ describe("SettingsPanel", () => {
       theme: "auto",
       provider: "claude",
       apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
     });
     mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
     mockedInvoke.mockResolvedValueOnce(null);
@@ -103,6 +114,8 @@ describe("SettingsPanel", () => {
           theme: "auto",
           provider: "claude",
           apiKey: "secret-key",
+          baseUrl: "https://api.anthropic.com",
+          companionMode: "default",
         },
       });
     });
@@ -119,6 +132,8 @@ describe("SettingsPanel", () => {
       theme: "auto",
       provider: "claude",
       apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
     });
     mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
     mockedInvoke.mockRejectedValueOnce(new Error("permission denied"));
@@ -172,6 +187,8 @@ describe("SettingsPanel", () => {
       theme: "auto",
       provider: "claude",
       apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
     });
     mockedInvoke.mockResolvedValueOnce({ source: "local", hasApiKey: true });
     mockedInvoke.mockResolvedValueOnce({
@@ -195,6 +212,8 @@ describe("SettingsPanel", () => {
       theme: "auto",
       provider: "claude",
       apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
     });
     mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
     mockedInvoke.mockRejectedValueOnce(new Error("network down"));
@@ -214,6 +233,8 @@ describe("SettingsPanel", () => {
       theme: "auto",
       provider: "claude",
       apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
     });
     mockedInvoke.mockResolvedValueOnce({ source: "env", hasApiKey: true });
 
@@ -245,6 +266,8 @@ describe("SettingsPanel", () => {
       theme: "auto",
       provider: "claude",
       apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
     });
     mockedInvoke.mockResolvedValueOnce({ source: "env", hasApiKey: true });
     mockedInvoke.mockResolvedValueOnce(null);
@@ -279,6 +302,8 @@ describe("SettingsPanel", () => {
       theme: "auto",
       provider: "claude",
       apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
     });
     mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
     mockedInvoke.mockResolvedValueOnce(null);
@@ -298,6 +323,8 @@ describe("SettingsPanel", () => {
       theme: "auto",
       provider: "claude",
       apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
     });
     mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
     mockedInvoke.mockResolvedValueOnce(null);
@@ -317,6 +344,8 @@ describe("SettingsPanel", () => {
       theme: "auto",
       provider: "claude",
       apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
     });
     mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
 

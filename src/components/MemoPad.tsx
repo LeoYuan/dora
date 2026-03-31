@@ -147,6 +147,53 @@ export function MemoPad({ onClose }: MemoPadProps) {
     setEditingContent("");
   };
 
+  const addMemoToCompanionMemory = async (memo: Memo) => {
+    const item = {
+      id: `${memo.id}-memory-${Date.now()}`,
+      content: memo.content,
+      source: "memo" as const,
+      createdAt: new Date().toISOString(),
+      isPinned: memo.isPinned,
+    };
+
+    try {
+      await invoke("save_companion_memory_item", { item });
+    } catch {
+      // Keep UI behavior deterministic even if backend fails.
+    }
+  };
+
+  const getDeleteButtonLabel = (memo: Memo) => `Delete memo ${memo.content}`;
+  const getEditButtonLabel = (memo: Memo) => `Edit memo ${memo.content}`;
+  const getAddToMemoryLabel = (memo: Memo) => `Add memo ${memo.content} to companion memory`;
+  const getSaveButtonLabel = (memo: Memo) => `Save memo ${memo.id}`;
+  const getCancelButtonLabel = (memo: Memo) => `Cancel editing memo ${memo.id}`;
+  const getEditInputLabel = (memo: Memo) => `Edit memo input ${memo.id}`;
+  const getMemoCardLabel = (memo: Memo) => `Memo card ${memo.id}`;
+  const formatMemoDate = (memo: Memo) => new Date(memo.createdAt).toLocaleDateString();
+  const canShowActions = (memo: Memo) => editingMemoId !== memo.id;
+  const getMemoColorClasses = (memo: Memo) => getColorClasses(memo.color);
+  const getMemoTransform = (memo: Memo) => `translate(${memo.position.x}px, ${memo.position.y}px)`;
+  const renderMemoContent = (memo: Memo) => memo.content;
+  const renderEmptyMemoryMessage = () => "还没有便签，创建一个吧！";
+  const getLoadingMessage = () => "加载中...";
+  const getFooterMessage = () => "便签会自动保存，随时可以从 Dora 的口袋中找到它们";
+  const getAddButtonText = () => "添加";
+  const getCancelButtonText = () => "取消";
+  const getSaveButtonText = () => "保存";
+  const getDeleteButtonText = () => "✕";
+  const getEditButtonText = () => "✎";
+  const getAddToMemoryButtonText = () => "记住";
+  const getMemoPlaceholder = () => "写下你的想法...";
+  const getSearchPlaceholder = () => "搜索便签...";
+  const getPanelTitle = () => "便签";
+  const getPanelSubtitle = () => "快速记录你的想法";
+  const getCloseLabel = () => "Close Dora memos";
+  const getSearchLabel = () => "Search Dora memos";
+  const getNewMemoLabel = () => "New Dora memo";
+  const getAddMemoLabel = () => "Add Dora memo";
+  const getColorLabel = (colorName: string) => `Select ${colorName} memo color`;
+
   const getColorClasses = (colorName: string) =>
     COLORS.find((color) => color.name === colorName) ?? COLORS[0];
 
@@ -166,19 +213,19 @@ export function MemoPad({ onClose }: MemoPadProps) {
   };
 
   return (
-    <div className="absolute inset-4 z-40 flex items-center justify-center rounded-3xl bg-slate-900/10 p-2">
-      <div className="flex h-full w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-white bg-white shadow-2xl">
+    <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-slate-900/10">
+      <div className="flex h-full w-full max-w-2xl flex-col overflow-hidden bg-white shadow-2xl">
         <div className="flex items-center justify-between bg-gradient-to-r from-yellow-400 to-yellow-500 px-6 py-4">
           <div className="flex items-center gap-3">
             <span className="text-2xl">📝</span>
             <div>
-              <h2 className="font-semibold text-gray-800">便签</h2>
-              <p className="text-xs text-gray-600">快速记录你的想法</p>
+              <h2 className="font-semibold text-gray-800">{getPanelTitle()}</h2>
+              <p className="text-xs text-gray-600">{getPanelSubtitle()}</p>
             </div>
           </div>
           <button
             type="button"
-            aria-label="Close Dora memos"
+            aria-label={getCloseLabel()}
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-white/50 text-gray-800 transition-colors hover:bg-white/70"
           >
@@ -192,7 +239,7 @@ export function MemoPad({ onClose }: MemoPadProps) {
               <button
                 key={color.name}
                 type="button"
-                aria-label={`Select ${color.name} memo color`}
+                aria-label={getColorLabel(color.name)}
                 onClick={() => setSelectedColor(color)}
                 className={`h-6 w-6 rounded-full border-2 ${color.bg} ${
                   selectedColor.name === color.name
@@ -204,17 +251,17 @@ export function MemoPad({ onClose }: MemoPadProps) {
           </div>
           <div className="mb-3">
             <input
-              aria-label="Search Dora memos"
+              aria-label={getSearchLabel()}
               type="text"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="搜索便签..."
+              placeholder={getSearchPlaceholder()}
               className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm outline-none focus:border-yellow-400"
             />
           </div>
           <div className="flex gap-2">
             <input
-              aria-label="New Dora memo"
+              aria-label={getNewMemoLabel()}
               type="text"
               value={newMemoContent}
               onChange={(event) => setNewMemoContent(event.target.value)}
@@ -223,17 +270,17 @@ export function MemoPad({ onClose }: MemoPadProps) {
                   void createMemo();
                 }
               }}
-              placeholder="写下你的想法..."
+              placeholder={getMemoPlaceholder()}
               className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm outline-none focus:border-yellow-400"
             />
             <button
               type="button"
-              aria-label="Add Dora memo"
+              aria-label={getAddMemoLabel()}
               onClick={() => void createMemo()}
               disabled={!newMemoContent.trim()}
               className="rounded-xl bg-yellow-400 px-4 py-2 font-medium text-gray-800 transition-colors hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              添加
+              {getAddButtonText()}
             </button>
           </div>
         </div>
@@ -241,31 +288,31 @@ export function MemoPad({ onClose }: MemoPadProps) {
         <div className="flex-1 overflow-y-auto p-4">
           {isLoading ? (
             <div className="flex h-full items-center justify-center text-gray-400">
-              加载中...
+              {getLoadingMessage()}
             </div>
           ) : memos.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-gray-400">
               <span className="mb-2 text-4xl">📝</span>
-              <p>还没有便签，创建一个吧！</p>
+              <p>{renderEmptyMemoryMessage()}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
               {filteredMemos.map((memo) => {
-                const colors = getColorClasses(memo.color);
+                const colors = getMemoColorClasses(memo);
                 return (
                   <div
                     key={memo.id}
-                    aria-label={`Memo card ${memo.id}`}
+                    aria-label={getMemoCardLabel(memo)}
                     onMouseDown={(event) => startDraggingMemo(memo, event)}
                     style={{
-                      transform: `translate(${memo.position.x}px, ${memo.position.y}px)`,
+                      transform: getMemoTransform(memo),
                     }}
                     className={`group relative cursor-grab rounded-xl border p-4 transition-transform ${colors.bg} ${colors.border}`}
                   >
                     {editingMemoId === memo.id ? (
                       <div className="space-y-2">
                         <input
-                          aria-label={`Edit memo input ${memo.id}`}
+                          aria-label={getEditInputLabel(memo)}
                           type="text"
                           value={editingContent}
                           onChange={(event) => setEditingContent(event.target.value)}
@@ -274,52 +321,62 @@ export function MemoPad({ onClose }: MemoPadProps) {
                         <div className="flex gap-2">
                           <button
                             type="button"
-                            aria-label={`Save memo ${memo.id}`}
+                            aria-label={getSaveButtonLabel(memo)}
                             onClick={() => void saveEditedMemo(memo)}
                             className="rounded-lg bg-white/80 px-3 py-1 text-xs font-medium text-gray-700"
                           >
-                            保存
+                            {getSaveButtonText()}
                           </button>
                           <button
                             type="button"
-                            aria-label={`Cancel editing memo ${memo.id}`}
+                            aria-label={getCancelButtonLabel(memo)}
                             onClick={() => {
                               setEditingMemoId(null);
                               setEditingContent("");
                             }}
                             className="rounded-lg bg-white/60 px-3 py-1 text-xs font-medium text-gray-700"
                           >
-                            取消
+                            {getCancelButtonText()}
                           </button>
                         </div>
                       </div>
                     ) : (
                       <p className="break-words whitespace-pre-wrap text-sm text-gray-800">
-                        {memo.content}
+                        {renderMemoContent(memo)}
                       </p>
                     )}
                     <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                      {editingMemoId !== memo.id && (
-                        <button
-                          type="button"
-                          aria-label={`Edit memo ${memo.content}`}
-                          onClick={() => startEditingMemo(memo)}
-                          className="flex h-6 w-6 items-center justify-center rounded-full bg-white/50 text-gray-600 hover:bg-white/80"
-                        >
-                          ✎
-                        </button>
+                      {canShowActions(memo) && (
+                        <>
+                          <button
+                            type="button"
+                            aria-label={getAddToMemoryLabel(memo)}
+                            onClick={() => void addMemoToCompanionMemory(memo)}
+                            className="rounded-full bg-white/70 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-white"
+                          >
+                            {getAddToMemoryButtonText()}
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={getEditButtonLabel(memo)}
+                            onClick={() => startEditingMemo(memo)}
+                            className="flex h-6 w-6 items-center justify-center rounded-full bg-white/50 text-gray-600 hover:bg-white/80"
+                          >
+                            {getEditButtonText()}
+                          </button>
+                        </>
                       )}
                       <button
                         type="button"
-                        aria-label={`Delete memo ${memo.content}`}
+                        aria-label={getDeleteButtonLabel(memo)}
                         onClick={() => void deleteMemo(memo.id)}
                         className="flex h-6 w-6 items-center justify-center rounded-full bg-white/50 text-gray-600 hover:bg-white/80"
                       >
-                        ✕
+                        {getDeleteButtonText()}
                       </button>
                     </div>
                     <span className="absolute bottom-2 right-2 text-xs text-gray-500">
-                      {new Date(memo.createdAt).toLocaleDateString()}
+                      {formatMemoDate(memo)}
                     </span>
                   </div>
                 );
@@ -330,7 +387,7 @@ export function MemoPad({ onClose }: MemoPadProps) {
 
         <div className="border-t border-gray-100 bg-gray-50 px-4 py-3 text-center">
           <p className="text-xs text-gray-400">
-            便签会自动保存，随时可以从 Dora 的口袋中找到它们
+            {getFooterMessage()}
           </p>
         </div>
       </div>
