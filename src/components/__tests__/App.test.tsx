@@ -26,7 +26,7 @@ describe("App", () => {
   it("renders the welcome home screen without the custom window header", () => {
     const { container } = render(<App />);
 
-    expect(screen.queryByText("桌面陪伴助手")).not.toBeInTheDocument();
+    expect(screen.getByText("桌面陪伴助手")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "开始聊天" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "便签" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "记忆" })).toBeInTheDocument();

@@ -214,8 +214,8 @@ export function MemoPad({ onClose }: MemoPadProps) {
 
   return (
     <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-slate-900/10">
-      <div className="flex h-full w-full max-w-2xl flex-col overflow-hidden bg-white shadow-2xl">
-        <div className="flex items-center justify-between bg-gradient-to-r from-yellow-400 to-yellow-500 px-6 py-4">
+      <div className="flex h-full w-full max-w-2xl flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl">
+        <div className="flex min-h-[72px] items-center justify-between bg-gradient-to-r from-yellow-400 to-yellow-500 px-6 py-4">
           <div className="flex items-center gap-3">
             <span className="text-2xl">📝</span>
             <div>
@@ -227,7 +227,7 @@ export function MemoPad({ onClose }: MemoPadProps) {
             type="button"
             aria-label={getCloseLabel()}
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/50 text-gray-800 transition-colors hover:bg-white/70"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/50 bg-white/35 text-sm text-gray-800 backdrop-blur-sm transition-all hover:bg-white/65"
           >
             ✕
           </button>
