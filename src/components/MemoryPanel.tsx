@@ -60,27 +60,32 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
 
   return (
     <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-slate-900/10">
-      <div className="flex h-full w-full max-w-2xl flex-col overflow-hidden bg-white shadow-2xl">
-        <div className="flex items-center justify-between bg-gradient-to-r from-violet-500 to-fuchsia-500 px-6 py-4 text-white">
+      <div className="flex h-full w-full max-w-2xl flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl">
+        <div className="flex min-h-[72px] items-center justify-between border-b border-violet-100 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 px-6 py-4 text-white shadow-sm">
           <div>
             <h2 className="font-semibold">记忆</h2>
-            <p className="text-xs text-white/70">管理 Dora 会长期参考的信息</p>
+            <p className="text-xs text-white/75">管理 Dora 会长期参考的信息</p>
           </div>
           <button
             type="button"
             aria-label="Close Dora memory"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 transition-colors hover:bg-white/25"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/14 text-sm text-white backdrop-blur-sm transition-all hover:bg-white/24"
           >
             ✕
           </button>
         </div>
 
         <div className="flex-1 space-y-6 overflow-y-auto bg-slate-50 p-6">
-          <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div>
-              <h3 className="text-sm font-medium text-slate-700">新增记忆</h3>
-              <p className="mt-1 text-xs text-slate-400">适合放长期偏好、身份背景和近期重要状态，不是聊天记录也不是便签。</p>
+          <section className="rounded-3xl border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-5 shadow-sm">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800">新增记忆</h3>
+                <p className="mt-1 text-xs leading-5 text-slate-500">放长期偏好、身份背景或近期重要状态。这里不是聊天记录，也不是便签。</p>
+              </div>
+              <span className="rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-medium text-violet-500 shadow-sm">
+                长期参考
+              </span>
             </div>
             <div className="flex gap-2">
               <input
@@ -94,25 +99,28 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
                     void addMemoryItem();
                   }
                 }}
-                placeholder="例如：我最近在学 Rust，偏好直接一点的表达"
-                className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
+                placeholder="比如：我喜欢直接一点的表达"
+                className="flex-1 rounded-2xl border border-white bg-white/95 px-4 py-3 text-sm text-slate-700 shadow-sm outline-none ring-1 ring-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-violet-200"
               />
               <button
                 type="button"
                 aria-label="Add companion memory"
                 onClick={() => void addMemoryItem()}
                 disabled={!newMemoryInput.trim()}
-                className="rounded-xl bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-2xl bg-slate-800 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-white/80"
               >
                 保存
               </button>
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-medium text-slate-700">记忆列表</h3>
-              <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] text-slate-500">
+          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800">记忆列表</h3>
+                <p className="mt-1 text-xs text-slate-400">这些内容会被 Dora 当作长期参考。</p>
+              </div>
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500">
                 {memoryItems.length} 条
               </span>
             </div>
@@ -120,31 +128,54 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
             {isLoading ? (
               <p className="text-sm text-slate-400">加载中...</p>
             ) : memoryItems.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {memoryItems.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-3"
+                    className="rounded-2xl border border-slate-100 bg-slate-50/90 px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 hover:bg-white hover:shadow-md"
                   >
-                    <div>
-                      <p className="text-sm text-slate-700">{item.content}</p>
-                      <p className="mt-1 text-[11px] text-slate-400">
-                        来源：{item.source === "memo" ? "便签" : item.source === "profile" ? "资料" : "手动添加"}
-                      </p>
+                    <div className="flex items-start justify-between gap-2.5">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          {item.isPinned ? (
+                            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-600">
+                              置顶
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-400">
+                              普通
+                            </span>
+                          )}
+                          <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-slate-300">
+                            memory
+                          </span>
+                        </div>
+                        <p className="mt-1.5 text-sm leading-6 text-slate-700">{item.content}</p>
+                        <p className="mt-0.5 text-[11px] text-slate-400">
+                          来源：{item.source === "memo" ? "便签" : item.source === "profile" ? "资料" : "手动添加"}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1.5 self-start">
+                        <span className="rounded-full bg-white px-2 py-1 text-[10px] font-medium text-slate-300 shadow-sm">
+                          排序预留
+                        </span>
+                        <button
+                          type="button"
+                          aria-label={`Delete companion memory ${item.content}`}
+                          onClick={() => void deleteMemoryItem(item.id)}
+                          className="rounded-full px-2 py-1 text-[11px] font-medium text-slate-400 transition hover:bg-white hover:text-rose-500"
+                        >
+                          删除
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      aria-label={`Delete companion memory ${item.content}`}
-                      onClick={() => void deleteMemoryItem(item.id)}
-                      className="text-xs font-medium text-slate-400 transition hover:text-slate-600"
-                    >
-                      删除
-                    </button>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-slate-400">还没有记忆内容，先添加一条吧。</p>
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
+                <p className="text-sm text-slate-400">还没有记忆内容，先添加一条吧。</p>
+              </div>
             )}
           </section>
         </div>

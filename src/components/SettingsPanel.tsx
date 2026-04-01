@@ -1,6 +1,36 @@
 import { useEffect, useState } from "react";
+import { Select } from "antd";
 import { invoke } from "../lib/tauri";
 import type { Settings, SettingsStatus } from "../types/settings";
+
+const SETTINGS_SELECT_OPTIONS = {
+  theme: [
+    { value: "light", label: "Light" },
+    { value: "dark", label: "Dark" },
+    { value: "auto", label: "Auto" },
+  ],
+  provider: [{ value: "claude", label: "Claude" }],
+};
+
+const SHARED_SELECT_PROPS = {
+  variant: "filled" as const,
+  popupMatchSelectWidth: true,
+  className: "dora-ant-select w-full",
+  classNames: {
+    popup: {
+      root: "dora-ant-select-dropdown",
+    },
+  },
+};
+
+const BUTTON_BASE_CLASS =
+  "rounded-xl px-4 py-2 text-sm font-medium shadow-sm transition disabled:cursor-not-allowed";
+const PRIMARY_BUTTON_CLASS =
+  `${BUTTON_BASE_CLASS} dora-primary-button bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-55`;
+const SECONDARY_BUTTON_CLASS =
+  `${BUTTON_BASE_CLASS} border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-100 disabled:opacity-50`;
+const SUBTLE_BUTTON_CLASS =
+  `${BUTTON_BASE_CLASS} dora-subtle-button border border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50`;
 
 interface ApiKeyTestResult {
   success: boolean;
@@ -111,8 +141,8 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
   return (
     <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-slate-900/10">
-      <div className="flex h-full w-full max-w-2xl flex-col overflow-hidden bg-white shadow-2xl">
-        <div className="flex items-center justify-between bg-gradient-to-r from-slate-700 to-slate-800 px-6 py-4 text-white">
+      <div className="flex h-full w-full max-w-2xl flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl">
+        <div className="flex min-h-[72px] items-center justify-between bg-gradient-to-r from-slate-700 to-slate-800 px-6 py-4 text-white">
           <div>
             <h2 className="font-semibold">设置</h2>
             <p className="text-xs text-white/70">管理 Dora 的基础配置</p>
@@ -121,14 +151,14 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
             type="button"
             aria-label="Close Dora settings"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 transition-colors hover:bg-white/25"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/14 text-sm text-white backdrop-blur-sm transition-all hover:bg-white/24"
           >
             ✕
           </button>
         </div>
 
-        <div className="flex-1 space-y-6 overflow-y-auto bg-slate-50 p-6">
-          <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex-1 space-y-5 overflow-y-auto bg-slate-50 p-6">
+          <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="settings-user-name">
                 用户名
@@ -143,7 +173,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                     userName: event.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none"
+                className="h-12 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none"
               />
             </div>
 
@@ -151,42 +181,36 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
               <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="settings-theme">
                 主题
               </label>
-              <select
-                id="settings-theme"
+              <Select
                 aria-label="Settings theme"
                 value={settings.theme}
-                onChange={(event) =>
+                onChange={(value) =>
                   setSettings((current) => ({
                     ...current,
-                    theme: event.target.value as Settings["theme"],
+                    theme: value as Settings["theme"],
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none"
-              >
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-                <option value="auto">Auto</option>
-              </select>
+                options={SETTINGS_SELECT_OPTIONS.theme}
+                {...SHARED_SELECT_PROPS}
+              />
             </div>
 
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="settings-provider">
                 API Provider
               </label>
-              <select
-                id="settings-provider"
+              <Select
                 aria-label="Settings provider"
                 value={settings.provider}
-                onChange={(event) =>
+                onChange={(value) =>
                   setSettings((current) => ({
                     ...current,
-                    provider: event.target.value as Settings["provider"],
+                    provider: value as Settings["provider"],
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none"
-              >
-                <option value="claude">Claude</option>
-              </select>
+                options={SETTINGS_SELECT_OPTIONS.provider}
+                {...SHARED_SELECT_PROPS}
+              />
             </div>
 
             <div>
@@ -204,7 +228,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                     apiKey: event.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none"
+                className="h-12 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none"
               />
             </div>
 
@@ -222,7 +246,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                     baseUrl: event.target.value,
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none"
+                className="h-12 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none"
               />
             </div>
 
@@ -231,7 +255,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
             </p>
           </section>
 
-          <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <section className="space-y-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div>
               <h3 className="text-sm font-medium text-slate-700">陪伴设置</h3>
               <p className="mt-1 text-xs text-slate-400">调整 Dora 和你互动时的默认风格。</p>
@@ -241,22 +265,23 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
               <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="settings-companion-mode">
                 陪伴模式
               </label>
-              <select
-                id="settings-companion-mode"
+              <Select
                 aria-label="Settings companion mode"
                 value={settings.companionMode}
-                onChange={(event) =>
+                onChange={(value) =>
                   setSettings((current) => ({
                     ...current,
-                    companionMode: event.target.value as Settings["companionMode"],
+                    companionMode: value as Settings["companionMode"],
                   }))
                 }
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none"
-              >
-                <option value="default">默认陪伴</option>
-                <option value="supportive">温柔支持</option>
-                <option value="focused">专注搭子</option>
-              </select>
+                options={[
+                  { value: "default", label: "默认陪伴" },
+                  { value: "supportive", label: "温柔支持" },
+                  { value: "focused", label: "专注搭子" },
+                ]}
+                {...SHARED_SELECT_PROPS}
+              />
+
               <p className="mt-2 text-xs text-slate-500">
                 {settings.companionMode === "default"
                   ? "自然、平衡，适合日常聊天和大多数场景。"
@@ -267,7 +292,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-sm font-medium text-slate-700">当前配置来源</p>
             <p className="mt-2 text-sm text-slate-500">{SOURCE_LABELS[status.source]}</p>
             <p className="mt-1 text-xs text-slate-400">
@@ -286,20 +311,20 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
           </section>
         </div>
 
-        <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-4">
+        <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/80 px-6 py-4 backdrop-blur-sm">
           <button
             type="button"
             onClick={() => void handleClearChatHistory()}
-            className="rounded-xl border border-rose-200 px-4 py-2 text-sm font-medium text-rose-500"
+            className={SUBTLE_BUTTON_CLASS}
           >
             清空聊天记录
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               onClick={() => void handleTestApiKey()}
               disabled={isTesting}
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className={SECONDARY_BUTTON_CLASS}
             >
               {isTesting ? "测试中..." : "测试 API Key"}
             </button>
@@ -307,7 +332,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
               type="button"
               onClick={() => void handleSave()}
               disabled={isSaving}
-              className="rounded-xl bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className={PRIMARY_BUTTON_CLASS}
             >
               {isSaving ? "保存中..." : "保存设置"}
             </button>

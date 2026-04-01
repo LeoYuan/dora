@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { invoke } from "../../lib/tauri";
 import { SettingsPanel } from "../SettingsPanel";
 
@@ -7,6 +7,14 @@ vi.mock("../../lib/tauri", () => ({
 }));
 
 const mockedInvoke = vi.mocked(invoke);
+
+const openCompanionModeSelect = async () => {
+  const modeLabel = await screen.findByText("陪伴模式");
+  const section = modeLabel.parentElement;
+  if (!section) throw new Error("Missing companion mode section");
+  const combobox = within(section).getByRole("combobox");
+  fireEvent.mouseDown(combobox);
+};
 
 describe("SettingsPanel", () => {
   beforeEach(() => {
@@ -31,7 +39,222 @@ describe("SettingsPanel", () => {
     expect(screen.getByLabelText("Settings provider")).toBeInTheDocument();
     expect(screen.getByLabelText("Settings API key")).toBeInTheDocument();
     expect(screen.getByLabelText("Settings base URL")).toHaveValue("https://api.anthropic.com");
-    expect(screen.getByLabelText("Settings companion mode")).toHaveValue("supportive");
+    expect(screen.getByText("更温柔、更安抚，情绪回应和鼓励感会更强。")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "保存设置" }).className).toContain("dora-primary-button");
+  });
+
+  it("uses custom selects for theme and provider", async () => {
+    mockedInvoke.mockResolvedValueOnce({
+      userName: "Leo",
+      theme: "auto",
+      provider: "claude",
+      apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
+    });
+    mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
+
+    render(<SettingsPanel onClose={() => {}} />);
+
+    expect((await screen.findByLabelText("Settings theme")).closest(".dora-ant-select")?.className).toContain("dora-ant-select");
+    expect(screen.getByLabelText("Settings provider").closest(".dora-ant-select")?.className).toContain("dora-ant-select");
+  });
+
+  it("shows disabled primary button style while saving", async () => {
+    mockedInvoke.mockResolvedValueOnce({
+      userName: "",
+      theme: "auto",
+      provider: "claude",
+      apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
+    });
+    mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
+
+    let resolveSave: ((value: null) => void) | undefined;
+    mockedInvoke.mockImplementationOnce(
+      (_command: string) =>
+        new Promise((resolve) => {
+          resolveSave = resolve as typeof resolveSave;
+        }),
+    );
+
+    render(<SettingsPanel onClose={() => {}} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "保存设置" }));
+
+    const saveButton = screen.getByRole("button", { name: "保存中..." });
+    expect(saveButton).toBeDisabled();
+    expect(saveButton.className).toContain("dora-primary-button");
+
+    resolveSave?.(null);
+  });
+
+  it("uses a muted clear chat action", async () => {
+    mockedInvoke.mockResolvedValueOnce({
+      userName: "",
+      theme: "auto",
+      provider: "claude",
+      apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
+    });
+    mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
+
+    render(<SettingsPanel onClose={() => {}} />);
+
+    expect((await screen.findByRole("button", { name: "清空聊天记录" })).className).toContain("dora-subtle-button");
+  });
+
+  it("renders theme and provider values from ant select", async () => {
+    mockedInvoke.mockResolvedValueOnce({
+      userName: "Leo",
+      theme: "auto",
+      provider: "claude",
+      apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
+    });
+    mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
+
+    render(<SettingsPanel onClose={() => {}} />);
+
+    expect(await screen.findByText("Auto")).toBeInTheDocument();
+    expect(screen.getByText("Claude")).toBeInTheDocument();
+  });
+
+  it("updates theme through custom select", async () => {
+    mockedInvoke.mockResolvedValueOnce({
+      userName: "",
+      theme: "auto",
+      provider: "claude",
+      apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
+    });
+    mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
+    mockedInvoke.mockResolvedValueOnce(null);
+    mockedInvoke.mockResolvedValueOnce({ source: "local", hasApiKey: true });
+
+    render(<SettingsPanel onClose={() => {}} />);
+
+    fireEvent.mouseDown(await screen.findByLabelText("Settings theme"));
+    fireEvent.click(await screen.findByTitle("Dark"));
+    fireEvent.click(screen.getByRole("button", { name: "保存设置" }));
+
+    await waitFor(() => {
+      expect(mockedInvoke).toHaveBeenCalledWith("save_settings", {
+        settings: expect.objectContaining({
+          theme: "dark",
+        }),
+      });
+    });
+  });
+
+  it("updates provider through custom select", async () => {
+    mockedInvoke.mockResolvedValueOnce({
+      userName: "",
+      theme: "auto",
+      provider: "claude",
+      apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
+    });
+    mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
+    mockedInvoke.mockResolvedValueOnce(null);
+    mockedInvoke.mockResolvedValueOnce({ source: "local", hasApiKey: true });
+
+    render(<SettingsPanel onClose={() => {}} />);
+
+    fireEvent.mouseDown(await screen.findByLabelText("Settings provider"));
+    fireEvent.click((await screen.findAllByTitle("Claude"))[1]);
+    fireEvent.click(screen.getByRole("button", { name: "保存设置" }));
+
+    await waitFor(() => {
+      expect(mockedInvoke).toHaveBeenCalledWith("save_settings", {
+        settings: expect.objectContaining({
+          provider: "claude",
+        }),
+      });
+    });
+  });
+
+  it("renders status actions on one row", async () => {
+    mockedInvoke.mockResolvedValueOnce({
+      userName: "",
+      theme: "auto",
+      provider: "claude",
+      apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
+    });
+    mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
+
+    render(<SettingsPanel onClose={() => {}} />);
+
+    const saveButton = await screen.findByRole("button", { name: "保存设置" });
+    expect(saveButton.parentElement?.className).toContain("gap-2.5");
+  });
+
+  it("renders filled companion mode select", async () => {
+    mockedInvoke.mockResolvedValueOnce({
+      userName: "",
+      theme: "auto",
+      provider: "claude",
+      apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
+    });
+    mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
+
+    render(<SettingsPanel onClose={() => {}} />);
+
+    const modeLabel = await screen.findByText("陪伴模式");
+    const section = modeLabel.parentElement;
+    if (!section) throw new Error("Missing companion mode section");
+    expect(within(section).getByRole("combobox").closest(".dora-ant-select")?.className).toContain("dora-ant-select");
+  });
+
+  it("invokes clear chat history", async () => {
+    mockedInvoke.mockResolvedValueOnce({
+      userName: "",
+      theme: "auto",
+      provider: "claude",
+      apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
+    });
+    mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
+    mockedInvoke.mockResolvedValueOnce(null);
+
+    render(<SettingsPanel onClose={() => {}} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "清空聊天记录" }));
+
+    await waitFor(() => {
+      expect(mockedInvoke).toHaveBeenCalledWith("clear_chat_history");
+    });
+  });
+
+  it("invokes clear chat history", async () => {
+    mockedInvoke.mockResolvedValueOnce({
+      userName: "",
+      theme: "auto",
+      provider: "claude",
+      apiKey: "",
+      baseUrl: "https://api.anthropic.com",
+      companionMode: "default",
+    });
+    mockedInvoke.mockResolvedValueOnce({ source: "missing", hasApiKey: false });
+    mockedInvoke.mockResolvedValueOnce(null);
+
+    render(<SettingsPanel onClose={() => {}} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "清空聊天记录" }));
+
+    await waitFor(() => {
+      expect(mockedInvoke).toHaveBeenCalledWith("clear_chat_history");
+    });
   });
 
   it("saves the configured base url", async () => {
@@ -52,9 +275,8 @@ describe("SettingsPanel", () => {
     fireEvent.change(await screen.findByLabelText("Settings base URL"), {
       target: { value: "https://code2ai.codes" },
     });
-    fireEvent.change(screen.getByLabelText("Settings companion mode"), {
-      target: { value: "focused" },
-    });
+    await openCompanionModeSelect();
+    fireEvent.click(await screen.findByTitle("专注搭子"));
     fireEvent.click(screen.getByRole("button", { name: "保存设置" }));
 
     await waitFor(() => {

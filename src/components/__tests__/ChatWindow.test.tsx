@@ -68,7 +68,20 @@ describe("ChatWindow", () => {
     ).toBeInTheDocument();
   });
 
-  it("restores welcome state after clear history", async () => {
+  it("renders the refined chat composer layout", async () => {
+    mockInitialLoads();
+
+    render(<ChatWindow onClose={() => {}} />);
+
+    const input = await screen.findByLabelText("Dora chat input");
+    expect(input.className).toContain("dora-chat-input");
+    expect(screen.queryByText("最近一次会话会自动保存")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Send Dora message").className).toContain("dora-chat-send");
+    expect(screen.queryByLabelText("Clear Dora chat history")).not.toBeInTheDocument();
+    expect(screen.getByText("你好呀！我是 Dora，你的桌面小伙伴～有什么我可以帮你的吗？").className).toContain("leading-6");
+  });
+
+  it("does not show clear history action in chat", async () => {
     mockInitialLoads({
       history: [
         {
@@ -79,19 +92,13 @@ describe("ChatWindow", () => {
         },
       ],
     });
-    mockedInvoke.mockResolvedValueOnce(null);
 
     render(<ChatWindow onClose={() => {}} />);
 
     await screen.findByText("之前的聊天记录");
-    fireEvent.click(screen.getByRole("button", { name: "Clear Dora chat history" }));
-
-    await waitFor(() => {
-      expect(
-        screen.getByText("你好呀！我是 Dora，你的桌面小伙伴～有什么我可以帮你的吗？"),
-      ).toBeInTheDocument();
-    });
+    expect(screen.queryByRole("button", { name: "Clear Dora chat history" })).not.toBeInTheDocument();
   });
+
 
   it("shows loading and appends assistant reply after sending", async () => {
     mockInitialLoads();

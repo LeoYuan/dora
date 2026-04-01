@@ -39,21 +39,6 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
     }
   };
 
-  const clearHistory = async () => {
-    try {
-      await invoke("clear_chat_history");
-    } catch {
-      // Keep UI deterministic even if backend fails.
-    }
-
-    setMessages([
-      {
-        ...WELCOME_MESSAGE,
-        timestamp: new Date().toISOString(),
-      },
-    ]);
-  };
-
   const appendAssistantMessage = (message: ChatMessage) => {
     setMessages((prev) => [...prev, message]);
   };
@@ -140,12 +125,10 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
     }
   };
 
-  const canClearHistory = messages.some((message) => message.id !== "welcome");
-
   return (
     <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-slate-900/10">
-      <div className="flex h-full w-full max-w-xl flex-col overflow-hidden bg-white shadow-2xl">
-        <div className="flex items-center justify-between bg-gradient-to-r from-[#00A0E9] to-[#0080C0] px-6 py-4">
+      <div className="flex h-full w-full max-w-xl flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl">
+        <div className="flex min-h-[72px] items-center justify-between bg-gradient-to-r from-[#00A0E9] to-[#0080C0] px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white">
               <span className="text-2xl">🐱</span>
@@ -159,28 +142,28 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
             type="button"
             aria-label="Close Dora chat"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white transition-colors hover:bg-white/30"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/14 text-sm text-white backdrop-blur-sm transition-all hover:bg-white/24"
           >
             ✕
           </button>
         </div>
 
-        <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        <div className="dora-chat-scroll flex-1 space-y-3 overflow-y-auto px-5 py-4">
           {messages.map((message) => (
             <div
               key={message.id}
               className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                className={`dora-chat-bubble max-w-[82%] px-4 py-2.5 ${
                   message.role === "user"
-                    ? "rounded-br-md bg-[#00A0E9] text-white"
-                    : "rounded-bl-md bg-gray-100 text-gray-800"
+                    ? "dora-chat-bubble-user bg-[#00A0E9] text-white"
+                    : "dora-chat-bubble-assistant bg-slate-200 text-slate-800"
                 }`}
               >
-                <p className="text-sm leading-relaxed">{message.content}</p>
+                <p className="m-0 whitespace-pre-wrap text-sm leading-6">{message.content}</p>
                 {message.role === "assistant" && message.debugError ? (
-                  <p className="mt-1 text-[11px] opacity-60">{message.debugError}</p>
+                  <p className="mt-2 text-[11px] leading-5 opacity-60">{message.debugError}</p>
                 ) : null}
               </div>
             </div>
@@ -188,18 +171,18 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
 
           {isLoading && (
             <div className="flex justify-start">
-              <div className="rounded-2xl rounded-bl-md bg-gray-100 px-4 py-3">
+              <div className="dora-chat-bubble dora-chat-bubble-assistant bg-slate-200 px-4 py-2.5">
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400" />
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-slate-400" />
                   <div
-                    className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+                    className="h-2 w-2 animate-bounce rounded-full bg-slate-400"
                     style={{ animationDelay: "0.1s" }}
                   />
                   <div
-                    className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+                    className="h-2 w-2 animate-bounce rounded-full bg-slate-400"
                     style={{ animationDelay: "0.2s" }}
                   />
-                  <span className="ml-1 text-xs text-gray-500">正在思考...</span>
+                  <span className="ml-1 text-xs text-slate-500">正在思考...</span>
                 </div>
               </div>
             </div>
@@ -207,20 +190,8 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="border-t border-gray-100 p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-xs text-gray-400">最近一次会话会自动保存</p>
-            <button
-              type="button"
-              aria-label="Clear Dora chat history"
-              onClick={() => void clearHistory()}
-              disabled={!canClearHistory}
-              className="text-xs font-medium text-slate-500 transition hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              清空聊天
-            </button>
-          </div>
-          <div className="flex gap-2">
+        <div className="dora-chat-composer-wrap border-t border-slate-200/80 bg-white/98 px-4 pb-2 pt-2 backdrop-blur-sm">
+          <div className="dora-chat-composer flex items-end gap-3 rounded-[24px] border border-slate-200 bg-white p-2.5 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
             <textarea
               ref={inputRef}
               aria-label="Dora chat input"
@@ -228,7 +199,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
               onChange={(event) => setInput(event.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="想和我说点什么..."
-              className="max-h-32 flex-1 resize-none rounded-2xl bg-gray-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#00A0E9]/30"
+              className="dora-chat-input max-h-32 flex-1 resize-none border-0 bg-slate-50/90 px-4 py-2.5 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-[#00A0E9]/20"
               rows={1}
               disabled={isLoading}
             />
@@ -237,14 +208,11 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
               aria-label="Send Dora message"
               onClick={() => void handleSend()}
               disabled={!input.trim() || isLoading}
-              className="rounded-2xl bg-[#00A0E9] px-6 py-3 font-medium text-white transition-colors hover:bg-[#0080C0] disabled:cursor-not-allowed disabled:opacity-50"
+              className="dora-chat-send rounded-2xl bg-[#00A0E9] px-6 py-2.5 font-medium text-white shadow-[0_10px_24px_rgba(0,160,233,0.24)] transition-all hover:bg-[#0080C0] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
             >
               发送
             </button>
           </div>
-          <p className="mt-2 text-center text-xs text-gray-400">
-            按 Enter 发送，Shift + Enter 换行
-          </p>
         </div>
       </div>
     </div>

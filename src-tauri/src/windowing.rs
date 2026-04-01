@@ -1,22 +1,13 @@
 use tauri::{AppHandle, Manager, WebviewWindow, Wry};
 use tauri::menu::{Menu, MenuItem};
-use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+use tauri::tray::TrayIconBuilder;
+use tauri::image::Image;
+
+const TRAY_ICON: Image<'_> = tauri::include_image!("icons/icon.png");
 
 pub const MAIN_WINDOW_LABEL: &str = "main";
-pub const FLOATING_WINDOW_LABEL: &str = "floating";
-pub const TRAY_TOGGLE_FLOATING_ID: &str = "toggle-floating";
 pub const TRAY_SHOW_MAIN_ID: &str = "show-main";
 pub const TRAY_QUIT_ID: &str = "quit";
-
-pub struct FloatingWindowState {
-    pub visible: bool,
-}
-
-impl Default for FloatingWindowState {
-    fn default() -> Self {
-        Self { visible: true }
-    }
-}
 
 pub fn resolve_close_action() -> &'static str {
     "hide-to-tray"
@@ -29,32 +20,14 @@ fn get_window(app: &AppHandle<Wry>, label: &str) -> Result<WebviewWindow<Wry>, S
 
 pub fn show_main_window(app: &AppHandle<Wry>) -> Result<(), String> {
     let window = get_window(app, MAIN_WINDOW_LABEL)?;
-    window.show().map_err(|error| error.to_string())?;
-    window.set_focus().map_err(|error| error.to_string())?;
-    Ok(())
-}
-
-pub fn show_floating_window(app: &AppHandle<Wry>) -> Result<(), String> {
-    let window = get_window(app, FLOATING_WINDOW_LABEL)?;
-    window.show().map_err(|error| error.to_string())?;
-    Ok(())
-}
-
-pub fn hide_floating_window(app: &AppHandle<Wry>) -> Result<(), String> {
-    let window = get_window(app, FLOATING_WINDOW_LABEL)?;
-    window.hide().map_err(|error| error.to_string())?;
-    Ok(())
-}
-
-pub fn toggle_floating_window(app: &AppHandle<Wry>) -> Result<(), String> {
-    let window = get_window(app, FLOATING_WINDOW_LABEL)?;
-    let visible = window.is_visible().map_err(|error| error.to_string())?;
-    if visible {
-        window.hide().map_err(|error| error.to_string())?;
-    } else {
-        window.show().map_err(|error| error.to_string())?;
-        window.set_focus().map_err(|error| error.to_string())?;
+    if window.is_minimized().map_err(|error| error.to_string())? {
+        window.unminimize().map_err(|error| error.to_string())?;
     }
+    window.show().map_err(|error| error.to_string())?;
+    window.unminimize().map_err(|error| error.to_string())?;
+    window.set_always_on_top(true).map_err(|error| error.to_string())?;
+    window.set_focus().map_err(|error| error.to_string())?;
+    let _ = window.set_always_on_top(false);
     Ok(())
 }
 
@@ -73,32 +46,24 @@ pub fn attach_main_close_behavior(window: &WebviewWindow<Wry>) {
     });
 }
 
+fn tray_icon_asset_path() -> &'static str {
+    "icons/icon.png"
+}
+
 pub fn setup_tray(app: &AppHandle<Wry>) -> Result<(), String> {
-    let toggle_item = MenuItem::with_id(app, TRAY_TOGGLE_FLOATING_ID, "显示/隐藏悬浮窗", true, None::<&str>)
-        .map_err(|error| error.to_string())?;
     let show_main_item = MenuItem::with_id(app, TRAY_SHOW_MAIN_ID, "打开主窗口", true, None::<&str>)
         .map_err(|error| error.to_string())?;
     let quit_item = MenuItem::with_id(app, TRAY_QUIT_ID, "退出应用", true, None::<&str>)
         .map_err(|error| error.to_string())?;
-    let menu = Menu::with_items(app, &[&toggle_item, &show_main_item, &quit_item])
+    let menu = Menu::with_items(app, &[&show_main_item, &quit_item])
         .map_err(|error| error.to_string())?;
 
     TrayIconBuilder::new()
+        .icon(TRAY_ICON.clone())
+        .icon_as_template(true)
         .menu(&menu)
-        .on_tray_icon_event(|tray, event| {
-            if let TrayIconEvent::Click {
-                button: MouseButton::Left,
-                button_state: MouseButtonState::Up,
-                ..
-            } = event
-            {
-                let _ = toggle_floating_window(&tray.app_handle());
-            }
-        })
+        .menu(&menu)
         .on_menu_event(|app, event| match event.id().as_ref() {
-            TRAY_TOGGLE_FLOATING_ID => {
-                let _ = toggle_floating_window(app);
-            }
             TRAY_SHOW_MAIN_ID => {
                 let _ = show_main_window(app);
             }
@@ -119,28 +84,13 @@ pub fn show_main_window_command(app: AppHandle<Wry>) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn show_floating_window_command(app: AppHandle<Wry>) -> Result<(), String> {
-    show_floating_window(&app)
-}
-
-#[tauri::command]
-pub fn hide_floating_window_command(app: AppHandle<Wry>) -> Result<(), String> {
-    hide_floating_window(&app)
-}
-
-#[tauri::command]
-pub fn toggle_floating_window_command(app: AppHandle<Wry>) -> Result<(), String> {
-    toggle_floating_window(&app)
-}
-
-#[tauri::command]
 pub fn quit_app_command(app: AppHandle<Wry>) {
     app.exit(0);
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{FloatingWindowState, resolve_close_action};
+    use super::{resolve_close_action, tray_icon_asset_path};
 
     #[test]
     fn keeps_app_in_tray_when_main_window_is_closed() {
@@ -148,8 +98,7 @@ mod tests {
     }
 
     #[test]
-    fn floating_window_starts_visible() {
-        let state = FloatingWindowState::default();
-        assert!(state.visible);
+    fn uses_explicit_tray_icon_asset() {
+        assert_eq!(tray_icon_asset_path(), "icons/icon.png");
     }
 }

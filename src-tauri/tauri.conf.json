@@ -10,6 +10,7 @@
     "frontendDist": "../dist"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
         "title": "Dora",
@@ -26,19 +27,6 @@
         "minimizable": true,
         "closable": true,
         "center": true
-      },
-      {
-        "title": "Dora Floating",
-        "label": "floating",
-        "width": 140,
-        "height": 160,
-        "decorations": false,
-        "transparent": true,
-        "alwaysOnTop": true,
-        "skipTaskbar": true,
-        "visible": true,
-        "resizable": false,
-        "closable": false
       }
     ],
     "security": {
