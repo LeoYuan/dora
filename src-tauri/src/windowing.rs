@@ -41,9 +41,9 @@ pub fn close_main_to_tray(app: &AppHandle<Wry>) -> Result<(), String> {
 pub fn attach_main_close_behavior(window: &WebviewWindow<Wry>) {
     let app = window.app_handle().clone();
     window.on_window_event(move |event| {
-        if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-            api.prevent_close();
-            let _ = close_main_to_tray(&app);
+        if let tauri::WindowEvent::CloseRequested { .. } = event {
+            // Let the window close normally - app will exit
+            let _ = app.exit(0);
         }
     });
 }

@@ -314,6 +314,7 @@ async fn create_claude_reply(
     state: &State<'_, AppState>,
     settings_state: &State<'_, SettingsState>,
     message: &str,
+    history: &[ChatMessage],
 ) -> Result<String, String> {
     if message.trim().is_empty() {
         return Err("empty message".to_string());
@@ -326,7 +327,6 @@ async fn create_claude_reply(
         return Err("missing api key".to_string());
     }
 
-    let history = state.chat_history.lock().map_err(|error| error.to_string())?.clone();
     let memory_items = state
         .companion_memory
         .lock()
@@ -336,7 +336,7 @@ async fn create_claude_reply(
         model: "claude-opus-4-6".to_string(),
         max_tokens: 1024,
         system: build_companion_system_prompt(&settings, &memory_items),
-        messages: build_claude_messages(&history, message),
+        messages: build_claude_messages(history, message),
     };
 
     let client = Client::new();
@@ -363,8 +363,9 @@ async fn resolve_chat_reply(
     state: &State<'_, AppState>,
     settings_state: &State<'_, SettingsState>,
     message: &str,
+    history: &[ChatMessage],
 ) -> ChatReply {
-    reply_or_fallback(create_claude_reply(state, settings_state, message).await)
+    reply_or_fallback(create_claude_reply(state, settings_state, message, history).await)
 }
 
 fn load_memos(path: &PathBuf) -> Vec<Memo> {
@@ -504,9 +505,9 @@ async fn chat(
     state: State<'_, AppState>,
     settings_state: State<'_, SettingsState>,
     message: String,
-    _history: Vec<ChatMessage>,
+    history: Vec<ChatMessage>,
 ) -> Result<ChatReply, String> {
-    let response = resolve_chat_reply(&state, &settings_state, &message).await;
+    let response = resolve_chat_reply(&state, &settings_state, &message, &history).await;
     let user_message = build_user_message(&message);
     let assistant_message = build_assistant_message(response.clone());
     persist_chat_reply(&state, user_message, assistant_message)?;

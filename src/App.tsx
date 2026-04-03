@@ -1,7 +1,6 @@
-import { useEffect } from "react";
-import { listen } from "@tauri-apps/api/event";
 import { Avatar } from "./components/Avatar";
 import { ChatWindow } from "./components/ChatWindow";
+import { GamePanel } from "./components/GamePanel";
 import { MemoPad } from "./components/MemoPad";
 import { MemoryPanel } from "./components/MemoryPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -13,45 +12,23 @@ function MainApp() {
     isMemoOpen,
     isMemoryOpen,
     isSettingsOpen,
+    isGameOpen,
     openChat,
     openMemo,
     openMemory,
     openSettings,
+    openGame,
     closeChat,
     closeMemo,
     closeMemory,
     closeSettings,
-    resetPanels,
+    closeGame,
   } = useAppStore();
-
-  useEffect(() => {
-    let unlisten: (() => void) | undefined;
-
-    const setupListener = async () => {
-      unlisten = await listen<string>("tray-event", (event) => {
-        if (event.payload === "open-chat") {
-          openChat();
-        } else if (event.payload === "open-settings") {
-          openSettings();
-        } else if (event.payload === "show-main") {
-          resetPanels();
-        }
-      });
-    };
-
-    void setupListener();
-
-    return () => {
-      if (unlisten) {
-        unlisten();
-      }
-    };
-  }, [openChat, openSettings, resetPanels]);
 
   return (
     <div className="flex min-h-screen w-full flex-col overflow-hidden bg-slate-100 text-slate-900">
       <main className="relative flex flex-1 items-center justify-center overflow-hidden bg-gradient-to-b from-sky-50 to-slate-100 px-6 py-8">
-        {!isChatOpen && !isMemoOpen && !isMemoryOpen && !isSettingsOpen && (
+        {!isChatOpen && !isMemoOpen && !isMemoryOpen && !isSettingsOpen && !isGameOpen && (
           <section className="flex w-full max-w-2xl flex-col items-center justify-center text-center">
             <div className="w-full rounded-[32px] border border-white/70 bg-white/80 px-10 py-12 shadow-[0_24px_70px_rgba(15,23,42,0.10)] ring-1 ring-white/60 backdrop-blur-sm">
               <div className="flex justify-center">
@@ -70,7 +47,7 @@ function MainApp() {
                 </div>
               </div>
 
-              <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-5">
                 <button
                   type="button"
                   onClick={openChat}
@@ -103,6 +80,16 @@ function MainApp() {
                 </button>
                 <button
                   type="button"
+                  onClick={openGame}
+                  className="rounded-2xl border border-slate-200/80 bg-white/70 px-6 py-3 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <span aria-hidden="true">🎮</span>
+                    <span>游戏</span>
+                  </span>
+                </button>
+                <button
+                  type="button"
                   onClick={openSettings}
                   className="rounded-2xl border border-slate-200/80 bg-white/70 px-6 py-3 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white"
                 >
@@ -120,6 +107,7 @@ function MainApp() {
         {isMemoOpen && <MemoPad onClose={closeMemo} />}
         {isMemoryOpen && <MemoryPanel onClose={closeMemory} />}
         {isSettingsOpen && <SettingsPanel onClose={closeSettings} />}
+        {isGameOpen && <GamePanel onClose={closeGame} />}
       </main>
     </div>
   );
