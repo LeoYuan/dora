@@ -44,8 +44,25 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
       // Keep UI deterministic even if backend fails.
     }
 
-    setMemoryItems((prev) => [item, ...prev]);
+    setMemoryItems((prev) => sortMemoryItems([item, ...prev]));
     setNewMemoryInput("");
+  };
+
+  const sortMemoryItems = (items: CompanionMemoryItem[]) =>
+    [...items].sort((left, right) => Number(right.isPinned) - Number(left.isPinned));
+
+  const togglePinned = async (id: string, isPinned: boolean) => {
+    try {
+      await invoke("toggle_companion_memory_pin", { id, isPinned });
+    } catch {
+      // Keep UI deterministic even if backend fails.
+    }
+
+    setMemoryItems((prev) =>
+      sortMemoryItems(
+        prev.map((item) => (item.id === id ? { ...item, isPinned } : item)),
+      ),
+    );
   };
 
   const deleteMemoryItem = async (id: string) => {
@@ -55,7 +72,7 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
       // Keep UI deterministic even if backend fails.
     }
 
-    setMemoryItems((prev) => prev.filter((item) => item.id !== id));
+    setMemoryItems((prev) => sortMemoryItems(prev.filter((item) => item.id !== id)));
   };
 
   return (
@@ -156,9 +173,18 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
                         </p>
                       </div>
                       <div className="flex shrink-0 items-center gap-1.5 self-start">
-                        <span className="rounded-full bg-white px-2 py-1 text-[10px] font-medium text-slate-300 shadow-sm">
-                          排序预留
-                        </span>
+                        <button
+                          type="button"
+                          aria-label={`${item.isPinned ? "Unpin" : "Pin"} companion memory ${item.content}`}
+                          onClick={() => void togglePinned(item.id, !item.isPinned)}
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
+                            item.isPinned
+                              ? "bg-violet-100 text-violet-600 hover:bg-violet-200"
+                              : "bg-white text-slate-400 shadow-sm hover:text-violet-500"
+                          }`}
+                        >
+                          {item.isPinned ? "取消置顶" : "置顶"}
+                        </button>
                         <button
                           type="button"
                           aria-label={`Delete companion memory ${item.content}`}

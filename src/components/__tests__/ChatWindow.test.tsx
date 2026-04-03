@@ -192,4 +192,84 @@ describe("ChatWindow", () => {
 
     expect(screen.queryByLabelText("Delete companion memory 喜欢喝拿铁")).not.toBeInTheDocument();
   });
+
+  it("shows timestamp on messages", async () => {
+    const timestamp = new Date().toISOString();
+    mockInitialLoads({
+      history: [
+        {
+          id: "history-1",
+          role: "user",
+          content: "你好",
+          timestamp,
+        },
+      ],
+    });
+
+    render(<ChatWindow onClose={() => {}} />);
+
+    const message = await screen.findByText("你好");
+    expect(message.closest(".dora-chat-bubble")?.querySelector(".dora-chat-time")).toBeInTheDocument();
+  });
+
+  it("shows retry button on failed assistant messages", async () => {
+    const timestamp = new Date().toISOString();
+    mockInitialLoads({
+      history: [
+        {
+          id: "history-1",
+          role: "user",
+          content: "测试",
+          timestamp,
+        },
+        {
+          id: "history-2",
+          role: "assistant",
+          content: "哎呀，我有点小迷糊，能再说一遍吗？",
+          timestamp,
+          source: "fallback",
+          debugError: "network error",
+        },
+      ],
+    });
+
+    render(<ChatWindow onClose={() => {}} />);
+
+    await screen.findByText("测试");
+    expect(screen.getByLabelText("Retry failed message")).toBeInTheDocument();
+  });
+
+  it("retries failed message when clicking retry", async () => {
+    const timestamp = new Date().toISOString();
+    mockInitialLoads({
+      history: [
+        {
+          id: "history-1",
+          role: "user",
+          content: "重试这条",
+          timestamp,
+        },
+        {
+          id: "history-2",
+          role: "assistant",
+          content: "哎呀，我有点小迷糊，能再说一遍吗？",
+          timestamp,
+          source: "fallback",
+          debugError: "network error",
+        },
+      ],
+    });
+    mockedInvoke.mockResolvedValueOnce("重试成功");
+
+    render(<ChatWindow onClose={() => {}} />);
+
+    await screen.findByText("重试这条");
+    fireEvent.click(screen.getByLabelText("Retry failed message"));
+
+    await waitFor(() => {
+      expect(mockedInvoke).toHaveBeenCalledWith("chat", expect.objectContaining({
+        message: "重试这条",
+      }));
+    });
+  });
 });

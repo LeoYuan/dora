@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { listen } from "@tauri-apps/api/event";
 import { Avatar } from "./components/Avatar";
 import { ChatWindow } from "./components/ChatWindow";
 import { MemoPad } from "./components/MemoPad";
@@ -19,7 +21,32 @@ function MainApp() {
     closeMemo,
     closeMemory,
     closeSettings,
+    resetPanels,
   } = useAppStore();
+
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+
+    const setupListener = async () => {
+      unlisten = await listen<string>("tray-event", (event) => {
+        if (event.payload === "open-chat") {
+          openChat();
+        } else if (event.payload === "open-settings") {
+          openSettings();
+        } else if (event.payload === "show-main") {
+          resetPanels();
+        }
+      });
+    };
+
+    void setupListener();
+
+    return () => {
+      if (unlisten) {
+        unlisten();
+      }
+    };
+  }, [openChat, openSettings, resetPanels]);
 
   return (
     <div className="flex min-h-screen w-full flex-col overflow-hidden bg-slate-100 text-slate-900">

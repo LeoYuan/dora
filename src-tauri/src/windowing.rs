@@ -1,4 +1,4 @@
-use tauri::{AppHandle, Manager, WebviewWindow, Wry};
+use tauri::{AppHandle, Emitter, Manager, WebviewWindow, Wry};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
 use tauri::image::Image;
@@ -7,6 +7,8 @@ const TRAY_ICON: Image<'_> = tauri::include_image!("icons/icon.png");
 
 pub const MAIN_WINDOW_LABEL: &str = "main";
 pub const TRAY_SHOW_MAIN_ID: &str = "show-main";
+pub const TRAY_OPEN_CHAT_ID: &str = "open-chat";
+pub const TRAY_OPEN_SETTINGS_ID: &str = "open-settings";
 pub const TRAY_QUIT_ID: &str = "quit";
 
 pub fn resolve_close_action() -> &'static str {
@@ -50,22 +52,40 @@ fn tray_icon_asset_path() -> &'static str {
     "icons/icon.png"
 }
 
+fn emit_tray_event(app: &AppHandle<Wry>, event: &str) -> Result<(), String> {
+    let window = app
+        .get_webview_window(MAIN_WINDOW_LABEL)
+        .ok_or_else(|| "missing main window".to_string())?;
+    window.emit("tray-event", event).map_err(|error| error.to_string())
+}
+
 pub fn setup_tray(app: &AppHandle<Wry>) -> Result<(), String> {
     let show_main_item = MenuItem::with_id(app, TRAY_SHOW_MAIN_ID, "打开主窗口", true, None::<&str>)
         .map_err(|error| error.to_string())?;
+    let open_chat_item = MenuItem::with_id(app, TRAY_OPEN_CHAT_ID, "打开聊天", true, None::<&str>)
+        .map_err(|error| error.to_string())?;
+    let open_settings_item = MenuItem::with_id(app, TRAY_OPEN_SETTINGS_ID, "打开设置", true, None::<&str>)
+        .map_err(|error| error.to_string())?;
     let quit_item = MenuItem::with_id(app, TRAY_QUIT_ID, "退出应用", true, None::<&str>)
         .map_err(|error| error.to_string())?;
-    let menu = Menu::with_items(app, &[&show_main_item, &quit_item])
+    let menu = Menu::with_items(app, &[&show_main_item, &open_chat_item, &open_settings_item, &quit_item])
         .map_err(|error| error.to_string())?;
 
     TrayIconBuilder::new()
         .icon(TRAY_ICON.clone())
         .icon_as_template(true)
         .menu(&menu)
-        .menu(&menu)
         .on_menu_event(|app, event| match event.id().as_ref() {
             TRAY_SHOW_MAIN_ID => {
                 let _ = show_main_window(app);
+            }
+            TRAY_OPEN_CHAT_ID => {
+                let _ = show_main_window(app);
+                let _ = emit_tray_event(app, "open-chat");
+            }
+            TRAY_OPEN_SETTINGS_ID => {
+                let _ = show_main_window(app);
+                let _ = emit_tray_event(app, "open-settings");
             }
             TRAY_QUIT_ID => {
                 app.exit(0);

@@ -37,6 +37,17 @@ pub struct CompanionMemoryItem {
     is_pinned: bool,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CompanionMemoryPinInput {
+    id: String,
+    is_pinned: bool,
+}
+
+fn sort_companion_memory(items: &mut [CompanionMemoryItem]) {
+    items.sort_by_key(|item| !item.is_pinned);
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Position {
     x: i32,
@@ -416,13 +427,29 @@ fn build_companion_system_prompt(settings: &Settings, memory_items: &[CompanionM
 
 #[tauri::command]
 fn get_companion_memory(state: State<AppState>) -> Vec<CompanionMemoryItem> {
-    state.companion_memory.lock().unwrap().clone()
+    let mut items = state.companion_memory.lock().unwrap().clone();
+    sort_companion_memory(&mut items);
+    items
 }
 
 #[tauri::command]
 fn save_companion_memory_item(state: State<AppState>, item: CompanionMemoryItem) -> Result<(), String> {
     let mut items = state.companion_memory.lock().map_err(|error| error.to_string())?;
     items.insert(0, item);
+    sort_companion_memory(&mut items);
+    persist_companion_memory(&state.companion_memory_path, &items)
+}
+
+#[tauri::command]
+fn toggle_companion_memory_pin(
+    state: State<AppState>,
+    input: CompanionMemoryPinInput,
+) -> Result<(), String> {
+    let mut items = state.companion_memory.lock().map_err(|error| error.to_string())?;
+    if let Some(item) = items.iter_mut().find(|item| item.id == input.id) {
+        item.is_pinned = input.is_pinned;
+    }
+    sort_companion_memory(&mut items);
     persist_companion_memory(&state.companion_memory_path, &items)
 }
 
@@ -430,6 +457,7 @@ fn save_companion_memory_item(state: State<AppState>, item: CompanionMemoryItem)
 fn delete_companion_memory_item(state: State<AppState>, id: String) -> Result<(), String> {
     let mut items = state.companion_memory.lock().map_err(|error| error.to_string())?;
     items.retain(|item| item.id != id);
+    sort_companion_memory(&mut items);
     persist_companion_memory(&state.companion_memory_path, &items)
 }
 
@@ -524,6 +552,7 @@ pub fn run() {
             clear_chat_history,
             get_companion_memory,
             save_companion_memory_item,
+            toggle_companion_memory_pin,
             delete_companion_memory_item,
             chat,
             get_settings,

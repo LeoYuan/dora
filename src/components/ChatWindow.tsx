@@ -15,12 +15,95 @@ const WELCOME_MESSAGE: ChatMessage = {
   debugError: null,
 };
 
+const formatTimestamp = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+};
+
+const canRetryMessage = (message: ChatMessage) =>
+  message.role === "assistant" && (message.source === "fallback" || Boolean(message.debugError));
+
 export function ChatWindow({ onClose }: ChatWindowProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const sendMessage = async (content: string, options?: { appendUserMessage?: boolean; retryMessageId?: string }) => {
+    const trimmedContent = content.trim();
+    if (!trimmedContent || isLoading) return;
+
+    const history = messages.slice(-10);
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: "user",
+      content: trimmedContent,
+      timestamp: new Date().toISOString(),
+    };
+
+    if (options?.appendUserMessage ?? true) {
+      setMessages((prev) => [...prev, userMessage]);
+    }
+    setInput("");
+    setIsLoading(true);
+
+    try {
+      const response = await invoke<string | ChatMessage>("chat", {
+        message: trimmedContent,
+        history,
+      });
+
+      if (options?.retryMessageId) {
+        setMessages((prev) => prev.filter((message) => message.id !== options.retryMessageId));
+      }
+      appendAssistantMessage(normalizeAssistantReply(response));
+    } catch (error) {
+      if (options?.retryMessageId) {
+        setMessages((prev) =>
+          prev.map((message) =>
+            message.id === options.retryMessageId
+              ? { ...message, debugError: getErrorMessage(error), source: "fallback" }
+              : message,
+          ),
+        );
+      } else {
+        appendFallbackMessage(getErrorMessage(error));
+      }
+    } finally {
+      setIsLoading(false);
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
+    }
+  };
+
+  const retryMessage = async (messageId: string) => {
+    const failedIndex = messages.findIndex((message) => message.id === messageId);
+    if (failedIndex < 0) return;
+
+    const sourceMessage = [...messages.slice(0, failedIndex)]
+      .reverse()
+      .find((message) => message.role === "user");
+    if (!sourceMessage) return;
+
+    await sendMessage(sourceMessage.content, {
+      appendUserMessage: false,
+      retryMessageId: messageId,
+    });
+  };
+
+  const handleSend = async () => {
+    await sendMessage(input);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      void handleSend();
+    }
+  };
 
   useEffect(() => {
     void loadHistory();
@@ -85,46 +168,6 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
     };
   };
 
-  const handleSend = async () => {
-    const content = input.trim();
-    if (!content || isLoading) return;
-
-    const history = messages.slice(-10);
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      role: "user",
-      content,
-      timestamp: new Date().toISOString(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsLoading(true);
-
-    try {
-      const response = await invoke<string | ChatMessage>("chat", {
-        message: content,
-        history,
-      });
-
-      appendAssistantMessage(normalizeAssistantReply(response));
-    } catch (error) {
-      appendFallbackMessage(getErrorMessage(error));
-    } finally {
-      setIsLoading(false);
-      requestAnimationFrame(() => {
-        inputRef.current?.focus();
-      });
-    }
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      void handleSend();
-    }
-  };
-
   return (
     <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-slate-900/10">
       <div className="flex h-full w-full max-w-xl flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl">
@@ -165,6 +208,20 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
                 {message.role === "assistant" && message.debugError ? (
                   <p className="mt-2 text-[11px] leading-5 opacity-60">{message.debugError}</p>
                 ) : null}
+                <p className={`dora-chat-time mt-1 text-[10px] opacity-60 ${message.role === "user" ? "text-white/70" : "text-slate-500"}`}>
+                  {formatTimestamp(message.timestamp)}
+                </p>
+                {canRetryMessage(message) && (
+                  <button
+                    type="button"
+                    aria-label="Retry failed message"
+                    onClick={() => void retryMessage(message.id)}
+                    disabled={isLoading}
+                    className="mt-2 rounded-lg bg-white/20 px-3 py-1 text-[11px] font-medium text-slate-700 transition hover:bg-white/40 disabled:opacity-50"
+                  >
+                    重试
+                  </button>
+                )}
               </div>
             </div>
           ))}
