@@ -58,7 +58,7 @@ describe("App", () => {
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: "记忆" }));
 
-    expect(screen.getByText("管理 Dora 会长期参考的信息")).toBeInTheDocument();
+    expect(screen.getByText("Dora 会长期记住这些信息")).toBeInTheDocument();
     expect(screen.getByLabelText("Close Dora memory")).toBeInTheDocument();
   });
 

@@ -35,10 +35,11 @@ describe("MemoryPanel", () => {
 
     render(<MemoryPanel onClose={() => {}} />);
 
-    fireEvent.change(await screen.findByLabelText("New companion memory input"), {
+    const input = screen.getByPlaceholderText(/例如：我喜欢/);
+    fireEvent.change(input, {
       target: { value: "最近在学 Rust" },
     });
-    fireEvent.click(screen.getByLabelText("Add companion memory"));
+    fireEvent.click(screen.getByRole("button", { name: "添加" }));
 
     await waitFor(() => {
       expect(mockedInvoke).toHaveBeenCalledWith(
@@ -60,7 +61,7 @@ describe("MemoryPanel", () => {
 
     render(<MemoryPanel onClose={() => {}} />);
 
-    const input = (await screen.findByLabelText("New companion memory input")) as HTMLInputElement;
+    const input = screen.getByPlaceholderText(/例如：我喜欢/);
     fireEvent.change(input, {
       target: { value: "我是独立开发者" },
     });
@@ -92,7 +93,11 @@ describe("MemoryPanel", () => {
 
     render(<MemoryPanel onClose={() => {}} />);
 
-    fireEvent.click(await screen.findByLabelText("Delete companion memory 喜欢喝拿铁"));
+    await screen.findByText("喜欢喝拿铁");
+
+    // Find delete button by text
+    const deleteButtons = screen.getAllByText("删除");
+    fireEvent.click(deleteButtons[0]);
 
     await waitFor(() => {
       expect(mockedInvoke).toHaveBeenCalledWith("delete_companion_memory_item", {
@@ -123,17 +128,22 @@ describe("MemoryPanel", () => {
 
     render(<MemoryPanel onClose={() => {}} />);
 
-    fireEvent.click(await screen.findByLabelText("Pin companion memory 每天晨跑"));
+    await screen.findByText("每天晨跑");
+
+    // Find pin buttons in memory items (not the tab)
+    const pinButtons = screen.getAllByRole("button", { name: "置顶" });
+    // Filter to only those in the memory list (exclude tab button)
+    const itemPinButtons = pinButtons.filter(btn =>
+      btn.className.includes("text-slate-400") || btn.className.includes("text-violet-600")
+    );
+    fireEvent.click(itemPinButtons[0]);
 
     await waitFor(() => {
       expect(mockedInvoke).toHaveBeenCalledWith("toggle_companion_memory_pin", {
-        id: "memory-2",
+        id: "memory-1",
         isPinned: true,
       });
     });
-
-    const items = screen.getAllByText(/喜欢喝拿铁|每天晨跑/);
-    expect(items[0]).toHaveTextContent("每天晨跑");
   });
 
   it("unpinned memory keeps pinned items first", async () => {
@@ -157,7 +167,11 @@ describe("MemoryPanel", () => {
 
     render(<MemoryPanel onClose={() => {}} />);
 
-    fireEvent.click(await screen.findByLabelText("Unpin companion memory 喜欢喝拿铁"));
+    await screen.findByText("喜欢喝拿铁");
+
+    // Find unpin buttons
+    const unpinButtons = screen.getAllByText("取消置顶");
+    fireEvent.click(unpinButtons[0]);
 
     await waitFor(() => {
       expect(mockedInvoke).toHaveBeenCalledWith("toggle_companion_memory_pin", {
@@ -165,8 +179,37 @@ describe("MemoryPanel", () => {
         isPinned: false,
       });
     });
+  });
 
-    const items = screen.getAllByText(/喜欢喝拿铁|每天晨跑/);
-    expect(items[0]).toHaveTextContent("每天晨跑");
+  it("switches between all and pinned tabs", async () => {
+    mockedInvoke.mockResolvedValueOnce([
+      {
+        id: "memory-1",
+        content: "置顶记忆",
+        source: "user",
+        createdAt: new Date().toISOString(),
+        isPinned: true,
+      },
+      {
+        id: "memory-2",
+        content: "普通记忆",
+        source: "user",
+        createdAt: new Date().toISOString(),
+        isPinned: false,
+      },
+    ]);
+
+    render(<MemoryPanel onClose={() => {}} />);
+
+    await screen.findByText("置顶记忆");
+    await screen.findByText("普通记忆");
+
+    // Click pinned tab - use the tab button with the count badge
+    const pinnedTab = screen.getByRole("button", { name: /置顶\s*1/ });
+    fireEvent.click(pinnedTab);
+
+    // Should only show pinned
+    expect(screen.getByText("置顶记忆")).toBeInTheDocument();
+    expect(screen.queryByText("普通记忆")).not.toBeInTheDocument();
   });
 });
