@@ -208,7 +208,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
                 {message.role === "assistant" && message.debugError ? (
                   <p className="mt-2 text-[11px] leading-5 opacity-60">{message.debugError}</p>
                 ) : null}
-                <p className={`dora-chat-time mt-1 text-[10px] opacity-60 ${message.role === "user" ? "text-white/70" : "text-slate-500"}`}>
+                <p className={`dora-chat-time mt-1.5 text-[11px] ${message.role === "user" ? "text-white/80" : "text-slate-500"}`}>
                   {formatTimestamp(message.timestamp)}
                 </p>
                 {canRetryMessage(message) && (
