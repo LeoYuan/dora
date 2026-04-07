@@ -153,11 +153,11 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
             className={`relative px-4 py-2 text-sm font-medium transition ${
               activeTab === "all"
                 ? "text-violet-600"
-                : "text-slate-500 hover:text-slate-700"
+                : "text-slate-400 hover:text-slate-600"
             }`}
           >
             全部记忆
-            <span className="ml-1.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">
+            <span className="ml-1.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-400">
               {memoryItems.length}
             </span>
             {activeTab === "all" && (
@@ -242,10 +242,10 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
                       <button
                         type="button"
                         onClick={() => void togglePinned(item.id, !item.isPinned)}
-                        className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                        className={`rounded-lg px-3 py-1.5 text-[11px] font-medium transition ${
                           item.isPinned
-                            ? "text-violet-600 hover:bg-violet-50"
-                            : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                            ? "text-violet-500 hover:bg-violet-50"
+                            : "text-slate-400 hover:bg-slate-100 hover:text-slate-500"
                         }`}
                       >
                         {item.isPinned ? "取消置顶" : "置顶"}
@@ -253,7 +253,7 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
                       <button
                         type="button"
                         onClick={() => void deleteMemoryItem(item.id)}
-                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-400 transition hover:bg-rose-50 hover:text-rose-500"
+                        className="rounded-lg px-3 py-1.5 text-[11px] font-medium text-slate-400 transition hover:bg-rose-50 hover:text-rose-400"
                       >
                         删除
                       </button>

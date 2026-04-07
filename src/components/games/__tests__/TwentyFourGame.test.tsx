@@ -3,53 +3,56 @@ import { describe, it, expect } from "vitest";
 import { TwentyFourGame } from "../TwentyFourGame";
 
 describe("TwentyFourGame", () => {
-  it("renders game with title and controls", () => {
+  it("renders game with title and cards", () => {
     render(<TwentyFourGame />);
 
-    expect(screen.getByText("算 24 点")).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText("输入算式，如: (3 + 5) * (2 + 1)")
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "提交" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "提示" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "换一组" })).toBeInTheDocument();
-  });
+    // Check header
+    expect(screen.getByText(/第 \d+ 关/)).toBeInTheDocument();
+    expect(screen.getByText(/得分:/)).toBeInTheDocument();
 
-  it("shows error for empty input", () => {
-    render(<TwentyFourGame />);
-
-    fireEvent.click(screen.getByRole("button", { name: "提交" }));
-    expect(screen.getByText("请输入算式")).toBeInTheDocument();
+    // Check action buttons
+    expect(screen.getByText("新游戏")).toBeInTheDocument();
+    expect(screen.getByText("提示")).toBeInTheDocument();
+    expect(screen.getByText("重玩")).toBeInTheDocument();
   });
 
   it("shows hint when clicked", () => {
     render(<TwentyFourGame />);
 
-    fireEvent.click(screen.getByRole("button", { name: "提示" }));
-    expect(screen.getByText(/提示：尝试不同的组合/)).toBeInTheDocument();
+    fireEvent.click(screen.getByText("提示"));
+    expect(screen.getByText(/提示：/)).toBeInTheDocument();
   });
 
-  it("generates new cards when clicking 换一组", () => {
+  it("can start new game", () => {
     render(<TwentyFourGame />);
 
-    fireEvent.click(screen.getByRole("button", { name: "换一组" }));
-    expect(screen.getByText("算 24 点")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("新游戏"));
+    expect(screen.getByText(/第 \d+ 关/)).toBeInTheDocument();
+  });
+
+  it("can reset game", () => {
+    render(<TwentyFourGame />);
+
+    fireEvent.click(screen.getByText("重玩"));
+    expect(screen.getByText(/第 1 关/)).toBeInTheDocument();
   });
 
   it("displays game rules", () => {
     render(<TwentyFourGame />);
 
-    expect(screen.getByText(/游戏规则:/)).toBeInTheDocument();
-    expect(screen.getByText(/使用给出的 4 个数字/)).toBeInTheDocument();
+    // Rules text appears in both message area and footer
+    const rulesElements = screen.getAllByText(/选择两个数字和一个运算符/);
+    expect(rulesElements.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("allows typing in input field", () => {
+  it("allows selecting cards and operators", () => {
     render(<TwentyFourGame />);
 
-    const input = screen.getByPlaceholderText(
-      "输入算式，如: (3 + 5) * (2 + 1)"
-    );
-    fireEvent.change(input, { target: { value: "3 * 8" } });
-    expect(input).toHaveValue("3 * 8");
+    // Click an operator first
+    const plusBtn = screen.getByText("＋");
+    fireEvent.click(plusBtn);
+
+    // Operator should be selected (scale-110)
+    expect(plusBtn.className).toContain("scale-110");
   });
 });

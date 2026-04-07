@@ -1,270 +1,342 @@
 import { useState, useCallback } from "react";
 
 interface Card {
+  id: string;
   value: number;
   display: string;
-  suit: string;
 }
 
 interface GameState {
   cards: Card[];
-  userInput: string;
+  selectedCardId: string | null;
+  selectedOperator: string | null;
   message: string;
   messageType: "info" | "success" | "error";
   score: number;
-  attempts: number;
+  level: number;
 }
 
-const SUITS = ["♠", "♥", "♣", "♦"];
-const VALUES = [
-  { value: 1, display: "A" },
-  { value: 2, display: "2" },
-  { value: 3, display: "3" },
-  { value: 4, display: "4" },
-  { value: 5, display: "5" },
-  { value: 6, display: "6" },
-  { value: 7, display: "7" },
-  { value: 8, display: "8" },
-  { value: 9, display: "9" },
-  { value: 10, display: "10" },
-  { value: 11, display: "J" },
-  { value: 12, display: "Q" },
-  { value: 13, display: "K" },
+const OPERATORS = [
+  { symbol: "+", display: "＋" },
+  { symbol: "-", display: "－" },
+  { symbol: "*", display: "×" },
+  { symbol: "/", display: "÷" },
 ];
 
 function generateCards(): Card[] {
+  // Generate 4 random numbers 1-13
   const cards: Card[] = [];
   for (let i = 0; i < 4; i++) {
-    const valueInfo = VALUES[Math.floor(Math.random() * VALUES.length)];
-    const suit = SUITS[Math.floor(Math.random() * SUITS.length)];
+    const value = Math.floor(Math.random() * 13) + 1;
     cards.push({
-      value: valueInfo.value,
-      display: valueInfo.display,
-      suit,
+      id: `card-${i}`,
+      value,
+      display: value.toString(),
     });
   }
   return cards;
 }
 
-function evaluateExpression(expr: string): number | null {
-  try {
-    // Only allow numbers, operators, and parentheses
-    if (!/^[\d+\-*/().\s]+$/.test(expr)) {
+function calculate(a: number, b: number, operator: string): number | null {
+  switch (operator) {
+    case "+":
+      return a + b;
+    case "-":
+      return a - b;
+    case "*":
+      return a * b;
+    case "/":
+      return b !== 0 ? a / b : null;
+    default:
       return null;
-    }
-    // eslint-disable-next-line no-eval
-    const result = eval(expr);
-    if (typeof result !== "number" || !isFinite(result)) {
-      return null;
-    }
-    return result;
-  } catch {
-    return null;
   }
-}
-
-function extractNumbers(expr: string): number[] {
-  const matches = expr.match(/\d+/g);
-  if (!matches) return [];
-  return matches.map((n) => parseInt(n, 10));
-}
-
-function arraysEqual(a: number[], b: number[]): boolean {
-  if (a.length !== b.length) return false;
-  const sortedA = [...a].sort((x, y) => x - y);
-  const sortedB = [...b].sort((x, y) => x - y);
-  return sortedA.every((val, i) => val === sortedB[i]);
 }
 
 export function TwentyFourGame() {
   const [game, setGame] = useState<GameState>(() => ({
     cards: generateCards(),
-    userInput: "",
-    message: "用 + - * / 和括号，让结果等于 24",
+    selectedCardId: null,
+    selectedOperator: null,
+    message: "选择两个数字和一个运算符",
     messageType: "info",
     score: 0,
-    attempts: 0,
+    level: 1,
   }));
 
+  const [history, setHistory] = useState<Card[][]>([]);
+
   const newGame = useCallback(() => {
-    setGame((prev) => ({
-      ...prev,
-      cards: generateCards(),
-      userInput: "",
-      message: "用 + - * / 和括号，让结果等于 24",
+    const newCards = generateCards();
+    setGame({
+      cards: newCards,
+      selectedCardId: null,
+      selectedOperator: null,
+      message: "选择两个数字和一个运算符",
       messageType: "info",
-    }));
+      score: game.score,
+      level: game.level + 1,
+    });
+    setHistory([]);
+  }, [game.score, game.level]);
+
+  const resetGame = useCallback(() => {
+    const newCards = generateCards();
+    setGame({
+      cards: newCards,
+      selectedCardId: null,
+      selectedOperator: null,
+      message: "选择两个数字和一个运算符",
+      messageType: "info",
+      score: 0,
+      level: 1,
+    });
+    setHistory([]);
   }, []);
 
-  const checkAnswer = useCallback(() => {
-    const input = game.userInput.trim();
-    if (!input) {
-      setGame((prev) => ({
-        ...prev,
-        message: "请输入算式",
-        messageType: "error",
-      }));
-      return;
-    }
+  const undo = useCallback(() => {
+    if (history.length === 0) return;
+    const previousCards = history[history.length - 1];
+    setHistory((prev) => prev.slice(0, -1));
+    setGame((prev) => ({
+      ...prev,
+      cards: previousCards,
+      selectedCardId: null,
+      selectedOperator: null,
+      message: "已撤销",
+      messageType: "info",
+    }));
+  }, [history]);
 
-    const usedNumbers = extractNumbers(input);
-    const cardValues = game.cards.map((c) => c.value);
+  const selectCard = useCallback(
+    (cardId: string) => {
+      const card = game.cards.find((c) => c.id === cardId);
+      if (!card) return;
 
-    if (!arraysEqual(usedNumbers, cardValues)) {
-      setGame((prev) => ({
-        ...prev,
-        message: `必须使用这四个数字: ${game.cards.map((c) => c.display).join(", ")}`,
-        messageType: "error",
-        attempts: prev.attempts + 1,
-      }));
-      return;
-    }
+      // If no operator selected, just select the card
+      if (!game.selectedOperator) {
+        setGame((prev) => ({
+          ...prev,
+          selectedCardId: cardId,
+          message: "选择一个运算符",
+          messageType: "info",
+        }));
+        return;
+      }
 
-    const result = evaluateExpression(input);
-    if (result === null) {
-      setGame((prev) => ({
-        ...prev,
-        message: "算式格式错误，请检查",
-        messageType: "error",
-        attempts: prev.attempts + 1,
-      }));
-      return;
-    }
+      // If operator selected but no first card
+      if (!game.selectedCardId) {
+        setGame((prev) => ({
+          ...prev,
+          selectedCardId: cardId,
+          message: "选择第二个数字",
+          messageType: "info",
+        }));
+        return;
+      }
 
-    if (Math.abs(result - 24) < 0.0001) {
+      // If both operator and first card selected, calculate
+      const firstCard = game.cards.find((c) => c.id === game.selectedCardId);
+      if (!firstCard || firstCard.id === cardId) return;
+
+      const result = calculate(firstCard.value, card.value, game.selectedOperator);
+      if (result === null) {
+        setGame((prev) => ({
+          ...prev,
+          message: "计算错误",
+          messageType: "error",
+          selectedCardId: null,
+          selectedOperator: null,
+        }));
+        return;
+      }
+
+      // Save history
+      setHistory((prev) => [...prev, game.cards]);
+
+      // Create new card with result
+      const newCard: Card = {
+        id: `result-${Date.now()}`,
+        value: result,
+        display: Number.isInteger(result) ? result.toString() : result.toFixed(2),
+      };
+
+      // Remove used cards and add result
+      const newCards = game.cards
+        .filter((c) => c.id !== firstCard.id && c.id !== card.id)
+        .concat(newCard);
+
+      // Check win condition
+      if (newCards.length === 1) {
+        if (Math.abs(newCards[0].value - 24) < 0.0001) {
+          setGame((prev) => ({
+            ...prev,
+            cards: newCards,
+            selectedCardId: null,
+            selectedOperator: null,
+            message: "🎉 恭喜！你算出了 24！",
+            messageType: "success",
+            score: prev.score + 1,
+          }));
+          setTimeout(() => {
+            newGame();
+          }, 2000);
+          return;
+        } else {
+          setGame((prev) => ({
+            ...prev,
+            cards: newCards,
+            selectedCardId: null,
+            selectedOperator: null,
+            message: `结果是 ${newCards[0].display}，不是 24。点击重玩再试一次`,
+            messageType: "error",
+          }));
+          return;
+        }
+      }
+
       setGame((prev) => ({
         ...prev,
-        message: `🎉 正确！${input} = 24`,
-        messageType: "success",
-        score: prev.score + 1,
-        attempts: prev.attempts + 1,
+        cards: newCards,
+        selectedCardId: null,
+        selectedOperator: null,
+        message: `计算结果: ${newCard.display}，继续！`,
+        messageType: "info",
       }));
-      // Auto start new game after 2 seconds
-      setTimeout(() => {
-        newGame();
-      }, 2000);
-    } else {
+    },
+    [game.cards, game.selectedCardId, game.selectedOperator, newGame]
+  );
+
+  const selectOperator = useCallback(
+    (operator: string) => {
+      if (game.cards.length < 2) return;
+
       setGame((prev) => ({
         ...prev,
-        message: `结果是 ${result.toFixed(2)}，不是 24，再试试`,
-        messageType: "error",
-        attempts: prev.attempts + 1,
+        selectedOperator: operator,
+        message: prev.selectedCardId ? "选择第二个数字" : "选择第一个数字",
+        messageType: "info",
       }));
-    }
-  }, [game.userInput, game.cards, newGame]);
+    },
+    [game.cards.length]
+  );
 
   const showHint = useCallback(() => {
     setGame((prev) => ({
       ...prev,
-      message: "提示：尝试不同的组合，比如 (a + b) * (c - d) 或 a * b + c * d",
+      message: "提示：尝试 (a + b) × (c - d) 或 a × b + c - d 这样的组合",
       messageType: "info",
     }));
   }, []);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      checkAnswer();
-    }
-  };
-
-  const getSuitColor = (suit: string) => {
-    return suit === "♥" || suit === "♦" ? "text-red-500" : "text-slate-700";
-  };
+  const isCardSelected = (cardId: string) => game.selectedCardId === cardId;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-slate-900 text-white">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-800">算 24 点</h2>
-          <p className="text-sm text-slate-500">
-            得分: {game.score} | 尝试: {game.attempts}
-          </p>
+      <div className="flex items-center justify-between border-b border-slate-700 px-6 py-4">
+        <div className="flex items-center gap-4">
+          <div>
+            <h2 className="text-lg font-semibold">第 {game.level} 关</h2>
+            <p className="text-sm text-slate-400">得分: {game.score}</p>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={newGame}
-          className="rounded-xl bg-sky-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-600"
-        >
-          换一组
-        </button>
+        <div className="flex gap-2">
+          {history.length > 0 && (
+            <button
+              type="button"
+              onClick={undo}
+              className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-medium transition hover:bg-slate-600"
+            >
+              撤销
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={resetGame}
+            className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-amber-400"
+          >
+            重玩
+          </button>
+        </div>
       </div>
 
       {/* Game Area */}
-      <div className="flex-1 space-y-6 overflow-y-auto p-6">
-        {/* Cards */}
-        <div className="flex justify-center gap-3">
-          {game.cards.map((card, index) => (
-            <div
-              key={index}
-              className="flex h-20 w-14 flex-col items-center justify-center rounded-xl border-2 border-slate-200 bg-white shadow-sm"
+      <div className="flex flex-1 flex-col items-center justify-center gap-8 p-6">
+        {/* Cards Grid */}
+        <div className="grid grid-cols-2 gap-4">
+          {game.cards.map((card) => (
+            <button
+              key={card.id}
+              type="button"
+              onClick={() => selectCard(card.id)}
+              disabled={game.cards.length === 1}
+              className={`flex h-24 w-24 items-center justify-center rounded-2xl text-4xl font-bold transition-all ${
+                isCardSelected(card.id)
+                  ? "bg-amber-400 text-slate-900 shadow-lg shadow-amber-400/30 scale-105"
+                  : "bg-amber-500 text-white shadow-lg shadow-amber-500/20 hover:bg-amber-400 hover:scale-105"
+              } ${game.cards.length === 1 ? "cursor-default" : ""}`}
             >
-              <span className={`text-lg font-bold ${getSuitColor(card.suit)}`}>
-                {card.display}
-              </span>
-              <span className={`text-xl ${getSuitColor(card.suit)}`}>
-                {card.suit}
-              </span>
-            </div>
+              {card.display}
+            </button>
           ))}
         </div>
 
-        {/* Input Area */}
-        <div className="space-y-3">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={game.userInput}
-              onChange={(e) =>
-                setGame((prev) => ({ ...prev, userInput: e.target.value }))
-              }
-              onKeyDown={handleKeyDown}
-              placeholder="输入算式，如: (3 + 5) * (2 + 1)"
-              className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-lg outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-            />
-          </div>
-
-          <div className="flex gap-2">
+        {/* Operators */}
+        <div className="flex gap-4">
+          {OPERATORS.map((op) => (
             <button
+              key={op.symbol}
               type="button"
-              onClick={checkAnswer}
-              className="flex-1 rounded-xl bg-sky-500 py-3 text-base font-medium text-white transition hover:bg-sky-600"
+              onClick={() => selectOperator(op.symbol)}
+              disabled={game.cards.length < 2}
+              className={`flex h-14 w-14 items-center justify-center rounded-xl text-3xl font-bold transition-all ${
+                game.selectedOperator === op.symbol
+                  ? "bg-purple-500 text-white shadow-lg shadow-purple-500/30 scale-110"
+                  : "bg-slate-800 text-purple-400 shadow-lg hover:bg-slate-700 hover:scale-105"
+              }`}
             >
-              提交
+              {op.display}
             </button>
-            <button
-              type="button"
-              onClick={showHint}
-              className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-base font-medium text-slate-600 transition hover:bg-slate-50"
-            >
-              提示
-            </button>
-          </div>
+          ))}
         </div>
 
         {/* Message */}
         <div
-          className={`rounded-xl px-4 py-3 text-center text-sm ${
+          className={`rounded-xl px-6 py-3 text-center text-sm font-medium ${
             game.messageType === "success"
-              ? "bg-green-100 text-green-700"
+              ? "bg-green-500/20 text-green-400"
               : game.messageType === "error"
-                ? "bg-red-100 text-red-700"
-                : "bg-sky-100 text-sky-700"
+                ? "bg-red-500/20 text-red-400"
+                : "bg-slate-800 text-slate-300"
           }`}
         >
           {game.message}
         </div>
 
-        {/* Rules */}
-        <div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
-          <p className="mb-2 font-medium">游戏规则:</p>
-          <ul className="list-inside list-disc space-y-1">
-            <li>使用给出的 4 个数字</li>
-            <li>通过 + - * / 和括号运算</li>
-            <li>使最终结果等于 24</li>
-            <li>每个数字必须且只能用一次</li>
-          </ul>
+        {/* Action Buttons */}
+        <div className="flex gap-4">
+          <button
+            type="button"
+            onClick={newGame}
+            className="flex flex-col items-center gap-2 rounded-xl bg-slate-800 px-6 py-3 transition hover:bg-slate-700"
+          >
+            <span className="text-2xl">🎮</span>
+            <span className="text-xs text-slate-400">新游戏</span>
+          </button>
+          <button
+            type="button"
+            onClick={showHint}
+            className="flex flex-col items-center gap-2 rounded-xl bg-slate-800 px-6 py-3 transition hover:bg-slate-700"
+          >
+            <span className="text-2xl">💡</span>
+            <span className="text-xs text-slate-400">提示</span>
+          </button>
         </div>
+      </div>
+
+      {/* Rules */}
+      <div className="border-t border-slate-700 bg-slate-800/50 px-6 py-4 text-center text-xs text-slate-400">
+        <p>选择两个数字和一个运算符，逐步计算出 24</p>
       </div>
     </div>
   );
