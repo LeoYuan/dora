@@ -241,7 +241,7 @@ export function SudokuGame() {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
         <div>
-          <h2 className="text-lg font-semibold text-slate-800">数独</h2>
+          <h2 className="text-lg font-medium text-slate-500">数独</h2>
           <p className="text-sm text-slate-500">
             时间: {formatTime(game.elapsedTime)} | 难度:
             {DIFFICULTY_LEVELS[game.difficulty].name}
@@ -256,7 +256,7 @@ export function SudokuGame() {
               className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
                 game.difficulty === diff
                   ? "bg-sky-500 text-white"
-                  : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  : "border border-slate-200 bg-white text-slate-400 hover:bg-slate-50"
               }`}
             >
               {DIFFICULTY_LEVELS[diff].name}
@@ -303,7 +303,7 @@ export function SudokuGame() {
                     onClick={() => selectCell(rowIndex, colIndex)}
                     className={`
                       flex h-10 w-10 items-center justify-center text-lg font-medium
-                      ${cell.isFixed ? "bg-slate-100 text-slate-800" : "bg-white text-sky-600"}
+                      ${cell.isFixed ? "bg-slate-100 text-slate-500" : "bg-white text-sky-600"}
                       ${isSelected ? "bg-sky-200" : ""}
                       ${!isSelected && (isSameRow || isSameCol || isSameBox) ? "bg-sky-50" : ""}
                       ${!cell.isValid && cell.value !== 0 ? "text-red-500" : ""}
@@ -328,7 +328,7 @@ export function SudokuGame() {
                 type="button"
                 onClick={() => inputNumber(num)}
                 disabled={game.isComplete}
-                className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-500 text-xl font-bold text-white transition hover:bg-sky-600 disabled:opacity-50"
+                className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-500 text-xl font-medium text-white transition hover:bg-sky-600 disabled:opacity-50"
               >
                 {num}
               </button>
@@ -346,7 +346,7 @@ export function SudokuGame() {
       </div>
 
       {/* Instructions */}
-      <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 text-sm text-slate-600">
+      <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 text-sm text-slate-400">
         <p>规则：在 9×9 的格子中填入 1-9，使每行、每列、每个 3×3 宫格内数字不重复</p>
         <p className="mt-1 text-xs text-slate-400">
           快捷键：数字键输入，方向键移动，Backspace 清除

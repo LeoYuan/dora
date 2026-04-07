@@ -115,7 +115,7 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
         <div className="border-b border-slate-100 bg-gradient-to-b from-violet-50/50 to-white px-6 py-5">
           <div className="mb-3 flex items-center gap-2">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 text-sm">+</span>
-            <span className="text-sm font-medium text-slate-700">添加新记忆</span>
+            <span className="text-sm font-normal text-slate-500">添加新记忆</span>
           </div>
           <div className="flex gap-3">
             <input
@@ -129,7 +129,7 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
                 }
               }}
               placeholder="例如：我喜欢简洁直接的表达方式..."
-              className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-500 shadow-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             />
             <button
               type="button"
@@ -150,14 +150,14 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
           <button
             type="button"
             onClick={() => setActiveTab("all")}
-            className={`relative px-4 py-2 text-sm font-medium transition ${
+            className={`relative px-4 py-2 text-[13px] font-normal transition ${
               activeTab === "all"
-                ? "text-violet-600"
-                : "text-slate-400 hover:text-slate-600"
+                ? "text-violet-500"
+                : "text-slate-300 hover:text-slate-400"
             }`}
           >
             全部记忆
-            <span className="ml-1.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-400">
+            <span className="ml-1.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] text-slate-300">
               {memoryItems.length}
             </span>
             {activeTab === "all" && (
@@ -167,14 +167,14 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
           <button
             type="button"
             onClick={() => setActiveTab("pinned")}
-            className={`relative px-4 py-2 text-sm font-medium transition ${
+            className={`relative px-4 py-2 text-[13px] font-normal transition ${
               activeTab === "pinned"
-                ? "text-violet-600"
-                : "text-slate-500 hover:text-slate-700"
+                ? "text-violet-500"
+                : "text-slate-300 hover:text-slate-400"
             }`}
           >
             置顶
-            <span className="ml-1.5 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] text-violet-600">
+            <span className="ml-1.5 rounded-full bg-violet-100 px-1.5 py-0.5 text-[9px] text-violet-300">
               {pinnedItems.length}
             </span>
             {activeTab === "pinned" && (
@@ -209,7 +209,7 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
 
                   {/* Content */}
                   <div className="mb-3">
-                    <p className="text-sm leading-relaxed text-slate-700">
+                    <p className="text-sm leading-relaxed text-slate-500">
                       {item.content}
                     </p>
                   </div>
@@ -242,10 +242,10 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
                       <button
                         type="button"
                         onClick={() => void togglePinned(item.id, !item.isPinned)}
-                        className={`rounded-lg px-3 py-1.5 text-[11px] font-medium transition ${
+                        className={`rounded-lg px-2.5 py-1 text-[10px] font-normal transition ${
                           item.isPinned
-                            ? "text-violet-500 hover:bg-violet-50"
-                            : "text-slate-400 hover:bg-slate-100 hover:text-slate-500"
+                            ? "text-violet-300 hover:bg-violet-50 hover:text-violet-400"
+                            : "text-slate-200 hover:bg-slate-100 hover:text-slate-300"
                         }`}
                       >
                         {item.isPinned ? "取消置顶" : "置顶"}
@@ -253,7 +253,7 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
                       <button
                         type="button"
                         onClick={() => void deleteMemoryItem(item.id)}
-                        className="rounded-lg px-3 py-1.5 text-[11px] font-medium text-slate-400 transition hover:bg-rose-50 hover:text-rose-400"
+                        className="rounded-lg px-2.5 py-1 text-[10px] font-normal text-slate-200 transition hover:bg-rose-50 hover:text-rose-300"
                       >
                         删除
                       </button>

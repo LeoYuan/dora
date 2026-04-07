@@ -204,7 +204,7 @@ export function MinesweeperGame() {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
         <div>
-          <h2 className="text-lg font-semibold text-slate-800">扫雷</h2>
+          <h2 className="text-lg font-medium text-slate-500">扫雷</h2>
           <p className="text-sm text-slate-500">
             时间: {formatTime(game.elapsedTime)} | 剩余: {game.mineCount - game.flagCount} 🚩
           </p>
@@ -218,7 +218,7 @@ export function MinesweeperGame() {
               className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
                 game.difficulty === diff
                   ? "bg-sky-500 text-white"
-                  : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  : "border border-slate-200 bg-white text-slate-400 hover:bg-slate-50"
               }`}
             >
               {DIFFICULTY_CONFIG[diff].name}
@@ -265,11 +265,11 @@ export function MinesweeperGame() {
                   onClick={() => revealCell(rowIndex, colIndex)}
                   onContextMenu={(e) => toggleFlag(e, rowIndex, colIndex)}
                   className={`
-                    flex h-7 w-7 items-center justify-center text-sm font-bold
+                    flex h-7 w-7 items-center justify-center text-sm font-medium
                     ${cell.isRevealed
                       ? cell.isMine
                         ? "bg-red-500 text-white"
-                        : "bg-slate-200 text-slate-800"
+                        : "bg-slate-200 text-slate-600"
                       : "bg-slate-300 hover:bg-slate-250"
                     }
                     ${!cell.isRevealed && cell.isFlagged ? "text-red-500" : ""}
@@ -282,7 +282,7 @@ export function MinesweeperGame() {
                         ? "text-red-600"
                         : cell.neighborMines === 4
                         ? "text-purple-600"
-                        : "text-slate-800"
+                        : "text-slate-600"
                       : ""
                     }
                   `}
@@ -302,7 +302,7 @@ export function MinesweeperGame() {
       </div>
 
       {/* Instructions */}
-      <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 text-sm text-slate-600">
+      <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 text-sm text-slate-400">
         <p>规则：点击格子翻开，右键标记地雷，找出所有安全格子</p>
         <p className="mt-1 text-xs text-slate-400">左键点击翻开，右键点击插旗</p>
       </div>

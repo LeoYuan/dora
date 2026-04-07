@@ -219,8 +219,8 @@ export function MemoPad({ onClose }: MemoPadProps) {
           <div className="flex items-center gap-3">
             <span className="text-2xl">📝</span>
             <div>
-              <h2 className="font-semibold text-gray-800">{getPanelTitle()}</h2>
-              <p className="text-xs text-gray-600">{getPanelSubtitle()}</p>
+              <h2 className="font-normal text-gray-500">{getPanelTitle()}</h2>
+              <p className="text-xs text-gray-400">{getPanelSubtitle()}</p>
             </div>
           </div>
           <button
@@ -278,7 +278,7 @@ export function MemoPad({ onClose }: MemoPadProps) {
               aria-label={getAddMemoLabel()}
               onClick={() => void createMemo()}
               disabled={!newMemoContent.trim()}
-              className="rounded-xl bg-yellow-400 px-4 py-2 font-medium text-gray-800 transition-colors hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl bg-yellow-400 px-4 py-2 font-normal text-gray-500 transition-colors hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {getAddButtonText()}
             </button>
@@ -323,7 +323,7 @@ export function MemoPad({ onClose }: MemoPadProps) {
                             type="button"
                             aria-label={getSaveButtonLabel(memo)}
                             onClick={() => void saveEditedMemo(memo)}
-                            className="rounded-lg bg-white/80 px-3 py-1 text-xs font-medium text-gray-700"
+                            className="rounded-lg bg-white/80 px-3 py-1 text-xs font-normal text-gray-500"
                           >
                             {getSaveButtonText()}
                           </button>
@@ -334,14 +334,14 @@ export function MemoPad({ onClose }: MemoPadProps) {
                               setEditingMemoId(null);
                               setEditingContent("");
                             }}
-                            className="rounded-lg bg-white/60 px-3 py-1 text-xs font-medium text-gray-700"
+                            className="rounded-lg bg-white/60 px-3 py-1 text-xs font-normal text-gray-500"
                           >
                             {getCancelButtonText()}
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <p className="break-words whitespace-pre-wrap text-sm text-gray-800">
+                      <p className="break-words whitespace-pre-wrap text-sm text-gray-500">
                         {renderMemoContent(memo)}
                       </p>
                     )}
@@ -352,7 +352,7 @@ export function MemoPad({ onClose }: MemoPadProps) {
                             type="button"
                             aria-label={getAddToMemoryLabel(memo)}
                             onClick={() => void addMemoToCompanionMemory(memo)}
-                            className="rounded-full bg-white/70 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-white"
+                            className="rounded-full bg-white/70 px-2 py-1 text-[11px] font-normal text-gray-400 hover:bg-white"
                           >
                             {getAddToMemoryButtonText()}
                           </button>
@@ -360,7 +360,7 @@ export function MemoPad({ onClose }: MemoPadProps) {
                             type="button"
                             aria-label={getEditButtonLabel(memo)}
                             onClick={() => startEditingMemo(memo)}
-                            className="flex h-6 w-6 items-center justify-center rounded-full bg-white/50 text-gray-600 hover:bg-white/80"
+                            className="flex h-6 w-6 items-center justify-center rounded-full bg-white/50 text-gray-400 hover:bg-white/80"
                           >
                             {getEditButtonText()}
                           </button>
@@ -370,7 +370,7 @@ export function MemoPad({ onClose }: MemoPadProps) {
                         type="button"
                         aria-label={getDeleteButtonLabel(memo)}
                         onClick={() => void deleteMemo(memo.id)}
-                        className="flex h-6 w-6 items-center justify-center rounded-full bg-white/50 text-gray-600 hover:bg-white/80"
+                        className="flex h-6 w-6 items-center justify-center rounded-full bg-white/50 text-gray-400 hover:bg-white/80"
                       >
                         {getDeleteButtonText()}
                       </button>

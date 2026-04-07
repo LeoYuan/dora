@@ -160,7 +160,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
         <div className="flex-1 space-y-5 overflow-y-auto bg-slate-50 p-6">
           <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="settings-user-name">
+              <label className="mb-1 block text-sm font-normal text-slate-500" htmlFor="settings-user-name">
                 用户名
               </label>
               <input
@@ -178,7 +178,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="settings-theme">
+              <label className="mb-1 block text-sm font-normal text-slate-500" htmlFor="settings-theme">
                 主题
               </label>
               <Select
@@ -196,7 +196,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="settings-provider">
+              <label className="mb-1 block text-sm font-normal text-slate-500" htmlFor="settings-provider">
                 API Provider
               </label>
               <Select
@@ -214,7 +214,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="settings-api-key">
+              <label className="mb-1 block text-sm font-normal text-slate-500" htmlFor="settings-api-key">
                 API Key
               </label>
               <input
@@ -233,7 +233,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="settings-base-url">
+              <label className="mb-1 block text-sm font-normal text-slate-500" htmlFor="settings-base-url">
                 Base URL
               </label>
               <input
@@ -257,12 +257,12 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
           <section className="space-y-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div>
-              <h3 className="text-sm font-medium text-slate-700">陪伴设置</h3>
+              <h3 className="text-sm font-normal text-slate-500">陪伴设置</h3>
               <p className="mt-1 text-xs text-slate-400">调整 Dora 和你互动时的默认风格。</p>
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="settings-companion-mode">
+              <label className="mb-1 block text-sm font-normal text-slate-500" htmlFor="settings-companion-mode">
                 陪伴模式
               </label>
               <Select
@@ -293,8 +293,8 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
           </section>
 
           <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-medium text-slate-700">当前配置来源</p>
-            <p className="mt-2 text-sm text-slate-500">{SOURCE_LABELS[status.source]}</p>
+            <p className="text-sm font-normal text-slate-500">当前配置来源</p>
+            <p className="mt-2 text-sm text-slate-400">{SOURCE_LABELS[status.source]}</p>
             <p className="mt-1 text-xs text-slate-400">
               {status.hasApiKey ? "已检测到可用 API Key" : "当前没有可用 API Key"}
             </p>

@@ -134,7 +134,7 @@ describe("MemoryPanel", () => {
     const pinButtons = screen.getAllByRole("button", { name: "置顶" });
     // Filter to only those in the memory list (exclude tab button)
     const itemPinButtons = pinButtons.filter(btn =>
-      btn.className.includes("text-slate-400") || btn.className.includes("text-violet-600")
+      btn.className.includes("text-slate-200") || btn.className.includes("text-violet-300")
     );
     fireEvent.click(itemPinButtons[0]);
 

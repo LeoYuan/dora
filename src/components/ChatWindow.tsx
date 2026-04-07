@@ -201,7 +201,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
                 className={`dora-chat-bubble max-w-[82%] px-4 py-2.5 ${
                   message.role === "user"
                     ? "dora-chat-bubble-user bg-[#00A0E9] text-white"
-                    : "dora-chat-bubble-assistant bg-slate-200 text-slate-800"
+                    : "dora-chat-bubble-assistant bg-slate-200 text-slate-600"
                 }`}
               >
                 <p className="m-0 whitespace-pre-wrap text-sm leading-6">{message.content}</p>
@@ -217,7 +217,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
                     aria-label="Retry failed message"
                     onClick={() => void retryMessage(message.id)}
                     disabled={isLoading}
-                    className="mt-2 rounded-lg bg-white/20 px-3 py-1 text-[11px] font-medium text-slate-700 transition hover:bg-white/40 disabled:opacity-50"
+                    className="mt-2 rounded-lg bg-white/20 px-3 py-1 text-[11px] font-normal text-slate-500 transition hover:bg-white/40 disabled:opacity-50"
                   >
                     重试
                   </button>
@@ -256,7 +256,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
               onChange={(event) => setInput(event.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="想和我说点什么..."
-              className="dora-chat-input max-h-32 flex-1 resize-none border-0 bg-slate-50/90 px-4 py-2.5 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-[#00A0E9]/20"
+              className="dora-chat-input max-h-32 flex-1 resize-none border-0 bg-slate-50/90 px-4 py-2.5 text-sm text-slate-500 outline-none focus:ring-2 focus:ring-[#00A0E9]/20"
               rows={1}
               disabled={isLoading}
             />
