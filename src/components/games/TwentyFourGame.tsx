@@ -78,6 +78,10 @@ function getSolution(nums: number[]): string | null {
   for (let i = 0; i < nums.length; i++) {
     solution = solution.replaceAll(`n${i}`, nums[i].toString());
   }
+  // Remove outermost parentheses if present
+  if (solution.startsWith('(') && solution.endsWith(')')) {
+    solution = solution.slice(1, -1);
+  }
   return solution;
 }
 
