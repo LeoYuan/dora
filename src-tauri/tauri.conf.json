@@ -15,8 +15,8 @@
       {
         "title": "Dora",
         "label": "main",
-        "width": 430,
-        "height": 720,
+        "width": 480,
+        "height": 800,
         "decorations": true,
         "transparent": false,
         "alwaysOnTop": false,
