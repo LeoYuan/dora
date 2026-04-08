@@ -265,24 +265,26 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
               <label className="mb-2 block text-sm font-normal text-slate-400" htmlFor="settings-companion-mode">
                 陪伴模式
               </label>
-              <Select
-                aria-label="Settings companion mode"
-                value={settings.companionMode}
-                onChange={(value) =>
-                  setSettings((current) => ({
-                    ...current,
-                    companionMode: value as Settings["companionMode"],
-                  }))
-                }
-                options={[
-                  { value: "default", label: "默认陪伴" },
-                  { value: "supportive", label: "温柔支持" },
-                  { value: "focused", label: "专注搭子" },
-                ]}
-                {...SHARED_SELECT_PROPS}
-              />
+              <div className="mb-2">
+                <Select
+                  aria-label="Settings companion mode"
+                  value={settings.companionMode}
+                  onChange={(value) =>
+                    setSettings((current) => ({
+                      ...current,
+                      companionMode: value as Settings["companionMode"],
+                    }))
+                  }
+                  options={[
+                    { value: "default", label: "默认陪伴" },
+                    { value: "supportive", label: "温柔支持" },
+                    { value: "focused", label: "专注搭子" },
+                  ]}
+                  {...SHARED_SELECT_PROPS}
+                />
+              </div>
 
-              <p className="mt-3 text-xs text-slate-400">
+              <p className="text-xs text-slate-400">
                 {settings.companionMode === "default"
                   ? "自然、平衡，适合日常聊天和大多数场景。"
                   : settings.companionMode === "supportive"

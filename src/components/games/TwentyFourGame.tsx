@@ -26,9 +26,14 @@ const OPERATORS = [
 // Check if 4 numbers can make 24 using +, -, *, /
 // Division only allowed when result is an integer (no fractions)
 function canMake24(nums: number[]): boolean {
-  function solve(values: number[]): boolean {
+  return getSolution(nums) !== null;
+}
+
+// Get a solution expression for the given numbers
+function getSolution(nums: number[]): string | null {
+  function solve(values: number[], exprs: string[]): string | null {
     if (values.length === 1) {
-      return Math.abs(values[0] - 24) < 0.0001;
+      return Math.abs(values[0] - 24) < 0.0001 ? exprs[0] : null;
     }
 
     for (let i = 0; i < values.length; i++) {
@@ -37,20 +42,43 @@ function canMake24(nums: number[]): boolean {
 
         const a = values[i];
         const b = values[j];
-        const remaining = values.filter((_, idx) => idx !== i && idx !== j);
+        const exprA = exprs[i];
+        const exprB = exprs[j];
+        const remainingValues = values.filter((_, idx) => idx !== i && idx !== j);
+        const remainingExprs = exprs.filter((_, idx) => idx !== i && idx !== j);
 
-        // Try all operations
-        if (solve([...remaining, a + b])) return true;
-        if (solve([...remaining, a - b])) return true;
-        if (solve([...remaining, a * b])) return true;
-        // Division: only allowed when b divides a evenly (integer result)
-        if (b !== 0 && a % b === 0 && solve([...remaining, a / b])) return true;
+        // Addition
+        const addResult = solve([...remainingValues, a + b], [...remainingExprs, `(${exprA}+${exprB})`]);
+        if (addResult) return addResult;
+
+        // Subtraction (both orders)
+        const subResult = solve([...remainingValues, a - b], [...remainingExprs, `(${exprA}-${exprB})`]);
+        if (subResult) return subResult;
+
+        // Multiplication
+        const mulResult = solve([...remainingValues, a * b], [...remainingExprs, `(${exprA}×${exprB})`]);
+        if (mulResult) return mulResult;
+
+        // Division: only allowed when b divides a evenly
+        if (b !== 0 && a % b === 0) {
+          const divResult = solve([...remainingValues, a / b], [...remainingExprs, `(${exprA}÷${exprB})`]);
+          if (divResult) return divResult;
+        }
       }
     }
-    return false;
+    return null;
   }
 
-  return solve(nums);
+  const exprs = nums.map((n, i) => `n${i}`);
+  const result = solve(nums, exprs);
+  if (!result) return null;
+
+  // Replace n0, n1, n2, n3 with actual numbers
+  let solution = result;
+  for (let i = 0; i < nums.length; i++) {
+    solution = solution.replaceAll(`n${i}`, nums[i].toString());
+  }
+  return solution;
 }
 
 function generateCards(): Card[] {
@@ -283,12 +311,22 @@ export function TwentyFourGame() {
   );
 
   const showHint = useCallback(() => {
-    setGame((prev) => ({
-      ...prev,
-      message: "提示：尝试 (a + b) × (c - d) 或 a × b + c - d 这样的组合",
-      messageType: "info",
-    }));
-  }, []);
+    const values = game.cards.map((c) => c.value);
+    const solution = getSolution(values);
+    if (solution) {
+      setGame((prev) => ({
+        ...prev,
+        message: `提示：${solution} = 24`,
+        messageType: "info",
+      }));
+    } else {
+      setGame((prev) => ({
+        ...prev,
+        message: "未找到解法，请尝试其他组合",
+        messageType: "info",
+      }));
+    }
+  }, [game.cards]);
 
   const isCardSelected = (cardId: string) => game.selectedCardId === cardId;
 

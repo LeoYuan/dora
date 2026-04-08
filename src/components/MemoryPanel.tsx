@@ -117,7 +117,7 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 text-sm">+</span>
             <span className="text-sm font-normal text-slate-400">添加新记忆</span>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 mb-3">
             <input
               type="text"
               value={newMemoryInput}
@@ -135,12 +135,12 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
               type="button"
               onClick={() => void addMemoryItem()}
               disabled={!newMemoryInput.trim()}
-              className="rounded-xl bg-violet-500 px-5 py-3 text-sm font-medium text-white shadow-md shadow-violet-200 transition hover:bg-violet-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+              className="rounded-xl bg-violet-400 px-5 py-3 text-sm font-normal text-white shadow-md shadow-violet-200 transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
             >
               添加
             </button>
           </div>
-          <p className="mt-4 text-xs text-slate-300">
+          <p className="text-xs text-slate-400">
             记忆会被 Dora 长期保存，在对话中作为背景知识参考
           </p>
         </div>
