@@ -215,10 +215,10 @@ export function MinesweeperGame() {
               key={diff}
               type="button"
               onClick={() => newGame(diff)}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+              className={`rounded-lg px-3 py-1.5 text-sm font-normal transition ${
                 game.difficulty === diff
-                  ? "bg-sky-500 text-white"
-                  : "border border-slate-200 bg-white text-slate-400 hover:bg-slate-50"
+                  ? "bg-sky-400 text-white"
+                  : "border border-slate-200 bg-white text-slate-300 hover:bg-slate-50"
               }`}
             >
               {DIFFICULTY_CONFIG[diff].name}
@@ -242,7 +242,7 @@ export function MinesweeperGame() {
                 <button
                   type="button"
                   onClick={() => newGame(game.difficulty)}
-                  className="mt-4 rounded-lg bg-sky-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-600"
+                  className="mt-4 rounded-lg bg-sky-400 px-4 py-2 text-sm font-normal text-white transition hover:bg-sky-500"
                 >
                   再玩一次
                 </button>

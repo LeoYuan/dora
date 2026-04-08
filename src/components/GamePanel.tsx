@@ -32,10 +32,10 @@ export function GamePanel({ onClose }: GamePanelProps) {
             <button
               type="button"
               onClick={() => setCurrentGame("24")}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+              className={`rounded-md px-3 py-1.5 text-xs font-normal transition ${
                 currentGame === "24"
-                  ? "bg-white text-purple-600"
-                  : "bg-white/20 text-white hover:bg-white/30"
+                  ? "bg-white text-purple-400"
+                  : "bg-white/20 text-white/80 hover:bg-white/30"
               }`}
             >
               算24点
@@ -43,10 +43,10 @@ export function GamePanel({ onClose }: GamePanelProps) {
             <button
               type="button"
               onClick={() => setCurrentGame("sudoku")}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+              className={`rounded-md px-3 py-1.5 text-xs font-normal transition ${
                 currentGame === "sudoku"
-                  ? "bg-white text-purple-600"
-                  : "bg-white/20 text-white hover:bg-white/30"
+                  ? "bg-white text-purple-400"
+                  : "bg-white/20 text-white/80 hover:bg-white/30"
               }`}
             >
               数独
@@ -54,10 +54,10 @@ export function GamePanel({ onClose }: GamePanelProps) {
             <button
               type="button"
               onClick={() => setCurrentGame("minesweeper")}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+              className={`rounded-md px-3 py-1.5 text-xs font-normal transition ${
                 currentGame === "minesweeper"
-                  ? "bg-white text-purple-600"
-                  : "bg-white/20 text-white hover:bg-white/30"
+                  ? "bg-white text-purple-400"
+                  : "bg-white/20 text-white/80 hover:bg-white/30"
               }`}
             >
               扫雷

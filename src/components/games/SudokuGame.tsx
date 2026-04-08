@@ -253,10 +253,10 @@ export function SudokuGame() {
               key={diff}
               type="button"
               onClick={() => newGame(diff)}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+              className={`rounded-lg px-3 py-1.5 text-sm font-normal transition ${
                 game.difficulty === diff
-                  ? "bg-sky-500 text-white"
-                  : "border border-slate-200 bg-white text-slate-400 hover:bg-slate-50"
+                  ? "bg-sky-400 text-white"
+                  : "border border-slate-200 bg-white text-slate-300 hover:bg-slate-50"
               }`}
             >
               {DIFFICULTY_LEVELS[diff].name}
