@@ -24,13 +24,13 @@ const SHARED_SELECT_PROPS = {
 };
 
 const BUTTON_BASE_CLASS =
-  "rounded-xl px-4 py-2 text-sm font-medium shadow-sm transition disabled:cursor-not-allowed";
+  "rounded-xl px-4 py-2 text-sm font-normal shadow-sm transition disabled:cursor-not-allowed";
 const PRIMARY_BUTTON_CLASS =
-  `${BUTTON_BASE_CLASS} dora-primary-button bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-55`;
+  `${BUTTON_BASE_CLASS} dora-primary-button bg-slate-600 text-white hover:bg-slate-500 disabled:opacity-55`;
 const SECONDARY_BUTTON_CLASS =
-  `${BUTTON_BASE_CLASS} border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-100 disabled:opacity-50`;
+  `${BUTTON_BASE_CLASS} border border-slate-300 bg-white text-slate-400 hover:border-slate-400 hover:bg-slate-100 disabled:opacity-50`;
 const SUBTLE_BUTTON_CLASS =
-  `${BUTTON_BASE_CLASS} dora-subtle-button border border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50`;
+  `${BUTTON_BASE_CLASS} dora-subtle-button border border-slate-200 bg-white text-slate-400 hover:border-slate-300 hover:bg-slate-50`;
 
 interface ApiKeyTestResult {
   success: boolean;
