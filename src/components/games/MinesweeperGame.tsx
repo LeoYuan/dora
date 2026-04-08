@@ -265,7 +265,7 @@ export function MinesweeperGame() {
                   onClick={() => revealCell(rowIndex, colIndex)}
                   onContextMenu={(e) => toggleFlag(e, rowIndex, colIndex)}
                   className={`
-                    flex h-7 w-7 items-center justify-center text-sm font-medium
+                    flex h-10 w-10 items-center justify-center text-sm font-medium
                     ${cell.isRevealed
                       ? cell.isMine
                         ? "bg-red-500 text-white"

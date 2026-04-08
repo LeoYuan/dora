@@ -16,10 +16,18 @@ interface GameState {
   elapsedTime: number;
 }
 
-const DIFFICULTY_LEVELS = {
-  easy: { emptyCells: 35, name: "简单" },
-  medium: { emptyCells: 45, name: "中等" },
-  hard: { emptyCells: 55, name: "困难" },
+interface DifficultyConfig {
+  size: 6 | 9;
+  emptyCells: number;
+  name: string;
+  boxRows: number;
+  boxCols: number;
+}
+
+const DIFFICULTY_LEVELS: Record<string, DifficultyConfig> = {
+  easy: { size: 6, emptyCells: 18, name: "简单", boxRows: 2, boxCols: 3 },
+  medium: { size: 9, emptyCells: 45, name: "中等", boxRows: 3, boxCols: 3 },
+  hard: { size: 9, emptyCells: 55, name: "困难", boxRows: 3, boxCols: 3 },
 };
 
 function isValidPlacement(board: Cell[][], row: number, col: number, num: number): boolean {
@@ -243,9 +251,17 @@ export function SudokuGame() {
       setGame((prev) => {
         const newBoard = prev.board.map((r) => r.map((c) => ({ ...c })));
         newBoard[row][col].value = num;
-        newBoard[row][col].isValid = isValidPlacement(newBoard, row, col, num);
 
-        // Check if complete
+        // Re-validate all non-fixed cells after each input
+        for (let r = 0; r < 9; r++) {
+          for (let c = 0; c < 9; c++) {
+            if (!newBoard[r][c].isFixed && newBoard[r][c].value !== 0) {
+              newBoard[r][c].isValid = isValidPlacement(newBoard, r, c, newBoard[r][c].value);
+            }
+          }
+        }
+
+        // Check if complete - all cells filled and valid
         const isComplete = newBoard.every((r) =>
           r.every((c) => c.value !== 0 && c.isValid)
         );
