@@ -128,6 +128,67 @@ function formatTime(seconds: number): string {
   return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 
+// Exported for testing
+export function getNextCell(
+  board: Cell[][],
+  currentRow: number,
+  currentCol: number,
+  direction: "up" | "down" | "left" | "right"
+): { row: number; col: number } | null {
+  let row = currentRow;
+  let col = currentCol;
+
+  switch (direction) {
+    case "up":
+      row = Math.max(0, row - 1);
+      break;
+    case "down":
+      row = Math.min(8, row + 1);
+      break;
+    case "left":
+      col = Math.max(0, col - 1);
+      break;
+    case "right":
+      col = Math.min(8, col + 1);
+      break;
+  }
+
+  // If position didn't change, we're at boundary
+  if (row === currentRow && col === currentCol) {
+    return null;
+  }
+
+  // Find next editable cell in the direction, skipping fixed cells
+  let targetRow = row;
+  let targetCol = col;
+  let attempts = 0;
+
+  while (board[targetRow][targetCol].isFixed && attempts < 9) {
+    switch (direction) {
+      case "up":
+        if (targetRow > 0) targetRow--;
+        break;
+      case "down":
+        if (targetRow < 8) targetRow++;
+        break;
+      case "left":
+        if (targetCol > 0) targetCol--;
+        break;
+      case "right":
+        if (targetCol < 8) targetCol++;
+        break;
+    }
+    attempts++;
+  }
+
+  // Return the cell if it's editable, otherwise null
+  if (!board[targetRow][targetCol].isFixed) {
+    return { row: targetRow, col: targetCol };
+  }
+
+  return null;
+}
+
 export function SudokuGame() {
   const [game, setGame] = useState<GameState>(() => ({
     board: generateSudoku(DIFFICULTY_LEVELS.easy.emptyCells),
@@ -160,10 +221,16 @@ export function SudokuGame() {
   }, []);
 
   const selectCell = useCallback((row: number, col: number) => {
-    setGame((prev) => ({
-      ...prev,
-      selectedCell: { row, col },
-    }));
+    setGame((prev) => {
+      // Don't allow selecting fixed cells
+      if (prev.board[row][col].isFixed) {
+        return { ...prev, selectedCell: null };
+      }
+      return {
+        ...prev,
+        selectedCell: { row, col },
+      };
+    });
   }, []);
 
   const inputNumber = useCallback(
@@ -213,23 +280,25 @@ export function SudokuGame() {
         clearCell();
       } else if (game.selectedCell) {
         const { row, col } = game.selectedCell;
-        switch (e.key) {
-          case "ArrowUp":
-            if (row > 0) selectCell(row - 1, col);
-            break;
-          case "ArrowDown":
-            if (row < 8) selectCell(row + 1, col);
-            break;
-          case "ArrowLeft":
-            if (col > 0) selectCell(row, col - 1);
-            break;
-          case "ArrowRight":
-            if (col < 8) selectCell(row, col + 1);
-            break;
+        const directionMap: Record<string, "up" | "down" | "left" | "right"> = {
+          ArrowUp: "up",
+          ArrowDown: "down",
+          ArrowLeft: "left",
+          ArrowRight: "right",
+        };
+        const direction = directionMap[e.key];
+        if (direction) {
+          const nextCell = getNextCell(game.board, row, col, direction);
+          if (nextCell) {
+            setGame((prev) => ({
+              ...prev,
+              selectedCell: nextCell,
+            }));
+          }
         }
       }
     },
-    [game.isComplete, game.selectedCell, inputNumber, clearCell, selectCell]
+    [game.isComplete, game.selectedCell, game.board, inputNumber, clearCell]
   );
 
   return (
@@ -266,7 +335,7 @@ export function SudokuGame() {
       </div>
 
       {/* Game Area */}
-      <div className="flex flex-1 items-center justify-center gap-8 p-6">
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-4 overflow-y-auto">
         {/* Board */}
         <div className="relative">
           {game.isComplete && (
@@ -281,7 +350,7 @@ export function SudokuGame() {
             </div>
           )}
 
-          <div className="grid grid-cols-9 gap-0.5 rounded-lg border-2 border-slate-800 bg-slate-800">
+          <div className="grid grid-cols-9 gap-px rounded-lg border-2 border-slate-800 bg-slate-800 p-1">
             {game.board.map((row, rowIndex) =>
               row.map((cell, colIndex) => {
                 const isSelected =
@@ -302,9 +371,12 @@ export function SudokuGame() {
                     type="button"
                     onClick={() => selectCell(rowIndex, colIndex)}
                     className={`
-                      flex h-10 w-10 items-center justify-center text-lg font-medium
-                      ${cell.isFixed ? "bg-slate-100 text-slate-500" : "bg-white text-sky-600"}
-                      ${isSelected ? "bg-sky-200" : ""}
+                      flex h-8 w-8 items-center justify-center text-base font-normal transition-all
+                      ${isSelected
+                        ? "bg-sky-300 ring-2 ring-sky-500 ring-inset z-10"
+                        : cell.isFixed
+                          ? "bg-slate-100 text-slate-500"
+                          : "bg-white text-sky-600"}
                       ${!isSelected && (isSameRow || isSameCol || isSameBox) ? "bg-sky-50" : ""}
                       ${!cell.isValid && cell.value !== 0 ? "text-red-500" : ""}
                       ${colIndex % 3 === 2 && colIndex !== 8 ? "border-r-2 border-r-slate-800" : ""}
@@ -320,28 +392,28 @@ export function SudokuGame() {
         </div>
 
         {/* Number Pad */}
-        <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-3 gap-2">
+        <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-5 gap-1.5">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
               <button
                 key={num}
                 type="button"
                 onClick={() => inputNumber(num)}
                 disabled={game.isComplete}
-                className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-500 text-xl font-medium text-white transition hover:bg-sky-600 disabled:opacity-50"
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-400 text-lg font-normal text-white transition hover:bg-sky-500 disabled:opacity-50"
               >
                 {num}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={clearCell}
+              disabled={game.isComplete}
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-red-300 bg-white text-sm font-normal text-red-400 transition hover:bg-red-50 disabled:opacity-50"
+            >
+              清除
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={clearCell}
-            disabled={game.isComplete}
-            className="rounded-lg border-2 border-red-400 bg-white py-3 text-base font-medium text-red-500 transition hover:bg-red-50 disabled:opacity-50"
-          >
-            清除
-          </button>
         </div>
       </div>
 
