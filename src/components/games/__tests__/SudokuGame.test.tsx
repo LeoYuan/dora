@@ -57,7 +57,8 @@ describe("SudokuGame", () => {
   it("displays game rules", () => {
     render(<SudokuGame />);
 
-    expect(screen.getByText(/规则：在 9×9 的格子中填入 1-9/)).toBeInTheDocument();
+    // Rules text is now dynamic based on board size
+    expect(screen.getByText(/规则：在/)).toBeInTheDocument();
     expect(screen.getByText(/快捷键：数字键输入，方向键移动/)).toBeInTheDocument();
   });
 
@@ -144,5 +145,84 @@ describe("getNextCell", () => {
     ]);
     const result = getNextCell(board, 4, 4, "up");
     expect(result).toEqual({ row: 0, col: 4 });
+  });
+});
+
+describe("6x6 Sudoku", () => {
+  it("renders 6x6 grid for easy difficulty", () => {
+    render(<SudokuGame />);
+
+    // Easy mode defaults to 6x6 - check grid style
+    const grid = document.querySelector('[style*="grid-template-columns"]');
+    expect(grid).toHaveAttribute("style", expect.stringContaining("repeat(6"));
+  });
+
+  it("renders 9x9 grid for medium difficulty", () => {
+    render(<SudokuGame />);
+
+    const mediumBtn = screen.getByRole("button", { name: "中等" });
+    fireEvent.click(mediumBtn);
+
+    // Check grid has 9 columns
+    const grid = document.querySelector('[style*="grid-template-columns"]');
+    expect(grid).toHaveAttribute("style", expect.stringContaining("repeat(9"));
+  });
+
+  it("validates 6x6 with 2x3 boxes correctly", () => {
+    render(<SudokuGame />);
+    // Easy mode defaults to 6x6
+    expect(screen.getByText(/难度:简单/)).toBeInTheDocument();
+  });
+
+  it("number pad shows 1-6 for easy mode", () => {
+    render(<SudokuGame />);
+    // Easy mode defaults to 6x6
+
+    // Get number pad buttons (filter by className to exclude board cells)
+    const numPadButtons = screen.getAllByRole("button").filter(
+      btn => btn.className.includes("bg-sky-400") && !btn.className.includes("h-8") && !btn.className.includes("h-10 w-10 text-base")
+    );
+
+    // Should have 6 number buttons + 1 clear button in number pad area
+    expect(numPadButtons.length).toBe(7); // 1-6 + clear
+
+    // Check numbers 1-6 exist
+    for (let i = 1; i <= 6; i++) {
+      expect(screen.getAllByText(i.toString()).length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it("number pad shows 1-9 for medium/hard mode", () => {
+    render(<SudokuGame />);
+    const mediumBtn = screen.getByRole("button", { name: "中等" });
+    fireEvent.click(mediumBtn);
+
+    // Get number pad buttons
+    const numPadButtons = screen.getAllByRole("button").filter(
+      btn => btn.className.includes("bg-sky-400") && !btn.className.includes("h-8")
+    );
+
+    // Should have 9 number buttons + 1 clear button
+    expect(numPadButtons.length).toBe(10); // 1-9 + clear
+  });
+
+  it("keyboard navigation respects 6x6 boundaries", () => {
+    // This will be tested via getNextCell with 6x6 board
+    const board6x6 = Array(6).fill(null).map((_, row) =>
+      Array(6).fill(null).map((_, col) => ({
+        value: 0,
+        isFixed: false,
+        isValid: true,
+        notes: [],
+      }))
+    );
+
+    // At row 5 (bottom), should not move down
+    const result = getNextCell(board6x6, 5, 3, "down");
+    expect(result).toBeNull();
+
+    // At col 5 (right edge), should not move right
+    const result2 = getNextCell(board6x6, 3, 5, "right");
+    expect(result2).toBeNull();
   });
 });

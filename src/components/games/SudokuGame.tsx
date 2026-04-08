@@ -30,22 +30,31 @@ const DIFFICULTY_LEVELS: Record<string, DifficultyConfig> = {
   hard: { size: 9, emptyCells: 55, name: "困难", boxRows: 3, boxCols: 3 },
 };
 
-function isValidPlacement(board: Cell[][], row: number, col: number, num: number): boolean {
+function isValidPlacement(
+  board: Cell[][],
+  row: number,
+  col: number,
+  num: number,
+  boxRows: number,
+  boxCols: number
+): boolean {
+  const size = board.length;
+
   // Check row
-  for (let c = 0; c < 9; c++) {
+  for (let c = 0; c < size; c++) {
     if (c !== col && board[row][c].value === num) return false;
   }
 
   // Check column
-  for (let r = 0; r < 9; r++) {
+  for (let r = 0; r < size; r++) {
     if (r !== row && board[r][col].value === num) return false;
   }
 
-  // Check 3x3 box
-  const boxRow = Math.floor(row / 3) * 3;
-  const boxCol = Math.floor(col / 3) * 3;
-  for (let r = boxRow; r < boxRow + 3; r++) {
-    for (let c = boxCol; c < boxCol + 3; c++) {
+  // Check box
+  const boxRow = Math.floor(row / boxRows) * boxRows;
+  const boxCol = Math.floor(col / boxCols) * boxCols;
+  for (let r = boxRow; r < boxRow + boxRows; r++) {
+    for (let c = boxCol; c < boxCol + boxCols; c++) {
       if ((r !== row || c !== col) && board[r][c].value === num) return false;
     }
   }
@@ -53,14 +62,15 @@ function isValidPlacement(board: Cell[][], row: number, col: number, num: number
   return true;
 }
 
-function solveSudoku(board: number[][]): boolean {
-  for (let row = 0; row < 9; row++) {
-    for (let col = 0; col < 9; col++) {
+function solveSudoku(board: number[][], boxRows: number, boxCols: number): boolean {
+  const size = board.length;
+  for (let row = 0; row < size; row++) {
+    for (let col = 0; col < size; col++) {
       if (board[row][col] === 0) {
-        for (let num = 1; num <= 9; num++) {
-          if (isValidNumber(board, row, col, num)) {
+        for (let num = 1; num <= size; num++) {
+          if (isValidNumber(board, row, col, num, boxRows, boxCols)) {
             board[row][col] = num;
-            if (solveSudoku(board)) return true;
+            if (solveSudoku(board, boxRows, boxCols)) return true;
             board[row][col] = 0;
           }
         }
@@ -71,39 +81,52 @@ function solveSudoku(board: number[][]): boolean {
   return true;
 }
 
-function isValidNumber(board: number[][], row: number, col: number, num: number): boolean {
-  for (let i = 0; i < 9; i++) {
+function isValidNumber(
+  board: number[][],
+  row: number,
+  col: number,
+  num: number,
+  boxRows: number,
+  boxCols: number
+): boolean {
+  const size = board.length;
+  for (let i = 0; i < size; i++) {
     if (board[row][i] === num) return false;
     if (board[i][col] === num) return false;
   }
-  const boxRow = Math.floor(row / 3) * 3;
-  const boxCol = Math.floor(col / 3) * 3;
-  for (let r = boxRow; r < boxRow + 3; r++) {
-    for (let c = boxCol; c < boxCol + 3; c++) {
+  const boxRow = Math.floor(row / boxRows) * boxRows;
+  const boxCol = Math.floor(col / boxCols) * boxCols;
+  for (let r = boxRow; r < boxRow + boxRows; r++) {
+    for (let c = boxCol; c < boxCol + boxCols; c++) {
       if (board[r][c] === num) return false;
     }
   }
   return true;
 }
 
-function generateSudoku(emptyCells: number): Cell[][] {
-  const board = Array(9)
+function generateSudoku(config: DifficultyConfig): Cell[][] {
+  const { size, emptyCells, boxRows, boxCols } = config;
+  const board = Array(size)
     .fill(null)
-    .map(() => Array(9).fill(0));
+    .map(() => Array(size).fill(0));
 
-  // Fill diagonal 3x3 boxes first (they are independent)
-  for (let box = 0; box < 3; box++) {
-    const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+  // For 9x9: Fill diagonal 3x3 boxes first (they are independent)
+  // For 6x6: Fill diagonal 2x3 boxes
+  const numDiagonalBoxes = size === 9 ? 3 : 2;
+  for (let box = 0; box < numDiagonalBoxes; box++) {
+    const nums = Array.from({ length: size }, (_, i) => i + 1).sort(() => Math.random() - 0.5);
     let idx = 0;
-    for (let r = box * 3; r < box * 3 + 3; r++) {
-      for (let c = box * 3; c < box * 3 + 3; c++) {
-        board[r][c] = nums[idx++];
+    for (let r = box * boxRows; r < box * boxRows + boxRows; r++) {
+      for (let c = box * boxCols; c < box * boxCols + boxCols; c++) {
+        if (r < size && c < size) {
+          board[r][c] = nums[idx++];
+        }
       }
     }
   }
 
   // Solve the rest
-  solveSudoku(board);
+  solveSudoku(board, boxRows, boxCols);
 
   // Convert to Cell format
   const cellBoard: Cell[][] = board.map((row) =>
@@ -118,8 +141,8 @@ function generateSudoku(emptyCells: number): Cell[][] {
   // Remove random cells
   let removed = 0;
   while (removed < emptyCells) {
-    const row = Math.floor(Math.random() * 9);
-    const col = Math.floor(Math.random() * 9);
+    const row = Math.floor(Math.random() * size);
+    const col = Math.floor(Math.random() * size);
     if (cellBoard[row][col].value !== 0) {
       cellBoard[row][col].value = 0;
       cellBoard[row][col].isFixed = false;
@@ -143,6 +166,7 @@ export function getNextCell(
   currentCol: number,
   direction: "up" | "down" | "left" | "right"
 ): { row: number; col: number } | null {
+  const size = board.length;
   let row = currentRow;
   let col = currentCol;
 
@@ -151,13 +175,13 @@ export function getNextCell(
       row = Math.max(0, row - 1);
       break;
     case "down":
-      row = Math.min(8, row + 1);
+      row = Math.min(size - 1, row + 1);
       break;
     case "left":
       col = Math.max(0, col - 1);
       break;
     case "right":
-      col = Math.min(8, col + 1);
+      col = Math.min(size - 1, col + 1);
       break;
   }
 
@@ -171,26 +195,26 @@ export function getNextCell(
   let targetCol = col;
   let attempts = 0;
 
-  while (board[targetRow][targetCol].isFixed && attempts < 9) {
+  while (board[targetRow]?.[targetCol]?.isFixed && attempts < size) {
     switch (direction) {
       case "up":
         if (targetRow > 0) targetRow--;
         break;
       case "down":
-        if (targetRow < 8) targetRow++;
+        if (targetRow < size - 1) targetRow++;
         break;
       case "left":
         if (targetCol > 0) targetCol--;
         break;
       case "right":
-        if (targetCol < 8) targetCol++;
+        if (targetCol < size - 1) targetCol++;
         break;
     }
     attempts++;
   }
 
   // Return the cell if it's editable, otherwise null
-  if (!board[targetRow][targetCol].isFixed) {
+  if (board[targetRow]?.[targetCol] && !board[targetRow][targetCol].isFixed) {
     return { row: targetRow, col: targetCol };
   }
 
@@ -199,7 +223,7 @@ export function getNextCell(
 
 export function SudokuGame() {
   const [game, setGame] = useState<GameState>(() => ({
-    board: generateSudoku(DIFFICULTY_LEVELS.easy.emptyCells),
+    board: generateSudoku(DIFFICULTY_LEVELS.easy),
     selectedCell: null,
     difficulty: "easy",
     isComplete: false,
@@ -219,7 +243,7 @@ export function SudokuGame() {
 
   const newGame = useCallback((difficulty: "easy" | "medium" | "hard") => {
     setGame({
-      board: generateSudoku(DIFFICULTY_LEVELS[difficulty].emptyCells),
+      board: generateSudoku(DIFFICULTY_LEVELS[difficulty]),
       selectedCell: null,
       difficulty,
       isComplete: false,
@@ -249,14 +273,23 @@ export function SudokuGame() {
       if (game.board[row][col].isFixed) return;
 
       setGame((prev) => {
+        const config = DIFFICULTY_LEVELS[prev.difficulty];
         const newBoard = prev.board.map((r) => r.map((c) => ({ ...c })));
         newBoard[row][col].value = num;
 
         // Re-validate all non-fixed cells after each input
-        for (let r = 0; r < 9; r++) {
-          for (let c = 0; c < 9; c++) {
+        const size = newBoard.length;
+        for (let r = 0; r < size; r++) {
+          for (let c = 0; c < size; c++) {
             if (!newBoard[r][c].isFixed && newBoard[r][c].value !== 0) {
-              newBoard[r][c].isValid = isValidPlacement(newBoard, r, c, newBoard[r][c].value);
+              newBoard[r][c].isValid = isValidPlacement(
+                newBoard,
+                r,
+                c,
+                newBoard[r][c].value,
+                config.boxRows,
+                config.boxCols
+              );
             }
           }
         }
@@ -290,8 +323,10 @@ export function SudokuGame() {
     (e: React.KeyboardEvent) => {
       if (game.isComplete) return;
 
-      if (e.key >= "1" && e.key <= "9") {
-        inputNumber(parseInt(e.key, 10));
+      const maxNum = game.board.length;
+      const keyNum = parseInt(e.key, 10);
+      if (e.key >= "1" && e.key <= "9" && keyNum <= maxNum) {
+        inputNumber(keyNum);
       } else if (e.key === "Backspace" || e.key === "Delete") {
         clearCell();
       } else if (game.selectedCell) {
@@ -366,9 +401,15 @@ export function SudokuGame() {
             </div>
           )}
 
-          <div className="grid grid-cols-9 gap-px rounded-lg border-2 border-slate-800 bg-slate-800 p-1">
+          <div
+            className="grid gap-px rounded-lg border-2 border-slate-800 bg-slate-800 p-1"
+            style={{
+              gridTemplateColumns: `repeat(${game.board.length}, minmax(0, 1fr))`,
+            }}
+          >
             {game.board.map((row, rowIndex) =>
               row.map((cell, colIndex) => {
+                const config = DIFFICULTY_LEVELS[game.difficulty];
                 const isSelected =
                   game.selectedCell?.row === rowIndex &&
                   game.selectedCell?.col === colIndex;
@@ -376,10 +417,13 @@ export function SudokuGame() {
                 const isSameCol = game.selectedCell?.col === colIndex;
                 const isSameBox =
                   game.selectedCell &&
-                  Math.floor(game.selectedCell.row / 3) ===
-                    Math.floor(rowIndex / 3) &&
-                  Math.floor(game.selectedCell.col / 3) ===
-                    Math.floor(colIndex / 3);
+                  Math.floor(game.selectedCell.row / config.boxRows) ===
+                    Math.floor(rowIndex / config.boxRows) &&
+                  Math.floor(game.selectedCell.col / config.boxCols) ===
+                    Math.floor(colIndex / config.boxCols);
+
+                const isBoxBorderRight = (colIndex + 1) % config.boxCols === 0 && colIndex !== config.size - 1;
+                const isBoxBorderBottom = (rowIndex + 1) % config.boxRows === 0 && rowIndex !== config.size - 1;
 
                 return (
                   <button
@@ -387,7 +431,8 @@ export function SudokuGame() {
                     type="button"
                     onClick={() => selectCell(rowIndex, colIndex)}
                     className={`
-                      flex h-8 w-8 items-center justify-center text-base font-normal transition-all
+                      flex items-center justify-center text-base font-normal transition-all
+                      ${config.size === 6 ? "h-10 w-10" : "h-8 w-8"}
                       ${isSelected
                         ? "bg-sky-300 ring-2 ring-sky-500 ring-inset z-10"
                         : cell.isFixed
@@ -395,8 +440,8 @@ export function SudokuGame() {
                           : "bg-white text-sky-600"}
                       ${!isSelected && (isSameRow || isSameCol || isSameBox) ? "bg-sky-50" : ""}
                       ${!cell.isValid && cell.value !== 0 ? "text-red-500" : ""}
-                      ${colIndex % 3 === 2 && colIndex !== 8 ? "border-r-2 border-r-slate-800" : ""}
-                      ${rowIndex % 3 === 2 && rowIndex !== 8 ? "border-b-2 border-b-slate-800" : ""}
+                      ${isBoxBorderRight ? "border-r-2 border-r-slate-800" : ""}
+                      ${isBoxBorderBottom ? "border-b-2 border-b-slate-800" : ""}
                     `}
                   >
                     {cell.value !== 0 ? cell.value : ""}
@@ -409,8 +454,8 @@ export function SudokuGame() {
 
         {/* Number Pad */}
         <div className="flex flex-col gap-2">
-          <div className="grid grid-cols-5 gap-1.5">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+          <div className={`grid gap-1.5 ${game.board.length === 6 ? 'grid-cols-3' : 'grid-cols-5'}`}>
+            {Array.from({ length: game.board.length }, (_, i) => i + 1).map((num) => (
               <button
                 key={num}
                 type="button"
@@ -435,7 +480,9 @@ export function SudokuGame() {
 
       {/* Instructions */}
       <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 text-sm text-slate-400">
-        <p>规则：在 9×9 的格子中填入 1-9，使每行、每列、每个 3×3 宫格内数字不重复</p>
+        <p>
+          规则：在 {game.board.length}×{game.board.length} 的格子中填入 1-{game.board.length}，使每行、每列、每个宫格内数字不重复
+        </p>
         <p className="mt-1 text-xs text-slate-400">
           快捷键：数字键输入，方向键移动，Backspace 清除
         </p>
