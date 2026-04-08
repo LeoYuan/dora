@@ -255,14 +255,14 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
             </p>
           </section>
 
-          <section className="space-y-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div>
-              <h3 className="text-sm font-normal text-slate-500">陪伴设置</h3>
-              <p className="mt-1 text-xs text-slate-400">调整 Dora 和你互动时的默认风格。</p>
+              <h3 className="text-sm font-normal text-slate-400">陪伴设置</h3>
+              <p className="mt-2 text-xs text-slate-300">调整 Dora 和你互动时的默认风格。</p>
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-normal text-slate-500" htmlFor="settings-companion-mode">
+              <label className="mb-2 block text-sm font-normal text-slate-400" htmlFor="settings-companion-mode">
                 陪伴模式
               </label>
               <Select
@@ -282,7 +282,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                 {...SHARED_SELECT_PROPS}
               />
 
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-3 text-xs text-slate-400">
                 {settings.companionMode === "default"
                   ? "自然、平衡，适合日常聊天和大多数场景。"
                   : settings.companionMode === "supportive"

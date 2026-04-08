@@ -261,7 +261,7 @@ export function TwentyFourGame() {
       </div>
 
       {/* Game Area */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-8 p-6">
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 p-6 overflow-y-auto">
         {/* Cards Grid */}
         <div className="grid grid-cols-2 gap-4">
           {game.cards.map((card) => (

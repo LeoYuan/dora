@@ -233,8 +233,8 @@ export function MemoPad({ onClose }: MemoPadProps) {
           </button>
         </div>
 
-        <div className="border-b border-gray-100 bg-gray-50 p-4">
-          <div className="mb-3 flex gap-2">
+        <div className="border-b border-gray-100 bg-gray-50 px-4 py-5">
+          <div className="mb-4 flex gap-2">
             {COLORS.map((color) => (
               <button
                 key={color.name}
@@ -249,14 +249,14 @@ export function MemoPad({ onClose }: MemoPadProps) {
               />
             ))}
           </div>
-          <div className="mb-3">
+          <div className="mb-4">
             <input
               aria-label={getSearchLabel()}
               type="text"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder={getSearchPlaceholder()}
-              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm outline-none focus:border-yellow-400"
+              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-yellow-400"
             />
           </div>
           <div className="flex gap-2">
@@ -271,7 +271,7 @@ export function MemoPad({ onClose }: MemoPadProps) {
                 }
               }}
               placeholder={getMemoPlaceholder()}
-              className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm outline-none focus:border-yellow-400"
+              className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-yellow-400"
             />
             <button
               type="button"

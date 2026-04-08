@@ -413,12 +413,12 @@ fn build_companion_system_prompt(settings: &Settings, memory_items: &[CompanionM
 
     if memory_summary.is_empty() {
         format!(
-            "你是 Dora，一个温暖、友善、简洁的桌面陪伴伙伴。{}{}回复要自然、简短、有温度。",
+            "你是 Dora，一个温暖、友善、简洁的桌面陪伴伙伴。{}{}回复要自然、简短、有温度。\n\n重要：直接回复用户，不要输出思考过程、分析或内心独白。",
             mode_instruction, user_name_instruction
         )
     } else {
         format!(
-            "你是 Dora，一个温暖、友善、简洁的桌面陪伴伙伴。{}{}这是你当前可见的陪伴记忆：\n{}\n回复要自然、简短、有温度。",
+            "你是 Dora，一个温暖、友善、简洁的桌面陪伴伙伴。{}{}这是你当前可见的陪伴记忆：\n{}\n回复要自然、简短、有温度。\n\n重要：直接回复用户，不要输出思考过程、分析或内心独白。",
             mode_instruction,
             user_name_instruction,
             memory_summary.join("\n")

@@ -112,10 +112,10 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
         </div>
 
         {/* Add Memory Section */}
-        <div className="border-b border-slate-100 bg-gradient-to-b from-violet-50/50 to-white px-6 py-5">
-          <div className="mb-3 flex items-center gap-2">
+        <div className="border-b border-slate-100 bg-gradient-to-b from-violet-50/50 to-white px-6 py-6">
+          <div className="mb-4 flex items-center gap-2">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 text-sm">+</span>
-            <span className="text-sm font-normal text-slate-500">添加新记忆</span>
+            <span className="text-sm font-normal text-slate-400">添加新记忆</span>
           </div>
           <div className="flex gap-3">
             <input
@@ -129,18 +129,18 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
                 }
               }}
               placeholder="例如：我喜欢简洁直接的表达方式..."
-              className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-500 shadow-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-400 shadow-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             />
             <button
               type="button"
               onClick={() => void addMemoryItem()}
               disabled={!newMemoryInput.trim()}
-              className="rounded-xl bg-violet-500 px-5 py-2.5 text-sm font-medium text-white shadow-md shadow-violet-200 transition hover:bg-violet-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+              className="rounded-xl bg-violet-500 px-5 py-3 text-sm font-medium text-white shadow-md shadow-violet-200 transition hover:bg-violet-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
             >
               添加
             </button>
           </div>
-          <p className="mt-2 text-xs text-slate-400">
+          <p className="mt-4 text-xs text-slate-300">
             记忆会被 Dora 长期保存，在对话中作为背景知识参考
           </p>
         </div>
