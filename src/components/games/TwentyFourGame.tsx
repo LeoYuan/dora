@@ -23,18 +23,71 @@ const OPERATORS = [
   { symbol: "/", display: "÷" },
 ];
 
-function generateCards(): Card[] {
-  // Generate 4 random numbers 1-13
-  const cards: Card[] = [];
-  for (let i = 0; i < 4; i++) {
-    const value = Math.floor(Math.random() * 13) + 1;
-    cards.push({
-      id: `card-${i}`,
-      value,
-      display: value.toString(),
-    });
+// Check if 4 numbers can make 24 using +, -, *, /
+function canMake24(nums: number[]): boolean {
+  const EPSILON = 0.0001;
+
+  function solve(values: number[]): boolean {
+    if (values.length === 1) {
+      return Math.abs(values[0] - 24) < EPSILON;
+    }
+
+    for (let i = 0; i < values.length; i++) {
+      for (let j = 0; j < values.length; j++) {
+        if (i === j) continue;
+
+        const a = values[i];
+        const b = values[j];
+        const remaining = values.filter((_, idx) => idx !== i && idx !== j);
+
+        // Try all operations
+        if (solve([...remaining, a + b])) return true;
+        if (solve([...remaining, a - b])) return true;
+        if (solve([...remaining, a * b])) return true;
+        if (b !== 0 && solve([...remaining, a / b])) return true;
+      }
+    }
+    return false;
   }
-  return cards;
+
+  return solve(nums);
+}
+
+function generateCards(): Card[] {
+  // Generate 4 random numbers 1-13 that can make 24
+  let attempts = 0;
+  let values: number[] = [];
+
+  do {
+    values = [];
+    for (let i = 0; i < 4; i++) {
+      values.push(Math.floor(Math.random() * 13) + 1);
+    }
+    attempts++;
+  } while (!canMake24(values) && attempts < 100);
+
+  // Fallback to known solvable combinations if random fails
+  if (attempts >= 100) {
+    const solvableSets = [
+      [1, 2, 3, 4],    // (1+3)*(2+4) = 24
+      [2, 3, 4, 6],    // (2*4)*(6-3) = 24
+      [3, 3, 8, 8],    // 8/(3-8/3) = 24
+      [4, 4, 6, 6],    // (4+4)*(6-6/6) = 24
+      [1, 5, 5, 5],    // (5-1/5)*5 = 24
+      [2, 4, 6, 8],    // (2*6)+(4*8) = 24
+      [3, 4, 5, 6],    // (3+5-4)*6 = 24
+      [1, 1, 8, 8],    // (1+1)*8+8 = 24
+      [2, 2, 4, 6],    // (2+2)*4+6 = 24
+      [1, 3, 4, 6],    // 6/(1-3/4) = 24
+    ];
+    values = solvableSets[Math.floor(Math.random() * solvableSets.length)];
+  }
+
+  return values.map((value, i) => ({
+    id: `card-${i}`,
+    value,
+    display: value.toString(),
+  }));
 }
 
 function calculate(a: number, b: number, operator: string): number | null {
