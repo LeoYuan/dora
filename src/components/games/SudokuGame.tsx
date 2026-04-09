@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { Leaderboard } from "./Leaderboard";
 
 interface Cell {
   value: number;
@@ -12,6 +13,7 @@ interface GameState {
   selectedCell: { row: number; col: number } | null;
   difficulty: "easy" | "medium" | "hard";
   isComplete: boolean;
+  isStarted: boolean;
   startTime: number;
   elapsedTime: number;
 }
@@ -227,11 +229,15 @@ export function SudokuGame() {
     selectedCell: null,
     difficulty: "easy",
     isComplete: false,
+    isStarted: false,
     startTime: Date.now(),
     elapsedTime: 0,
   }));
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   useEffect(() => {
+    if (!game.isStarted || game.isComplete) return;
+
     const timer = setInterval(() => {
       setGame((prev) => ({
         ...prev,
@@ -239,7 +245,7 @@ export function SudokuGame() {
       }));
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [game.isStarted, game.isComplete]);
 
   const newGame = useCallback((difficulty: "easy" | "medium" | "hard") => {
     setGame({
@@ -247,22 +253,25 @@ export function SudokuGame() {
       selectedCell: null,
       difficulty,
       isComplete: false,
+      isStarted: false,
       startTime: Date.now(),
       elapsedTime: 0,
     });
   }, []);
 
+  const startGame = useCallback(() => {
+    setGame((prev) => ({
+      ...prev,
+      isStarted: true,
+      startTime: Date.now(),
+    }));
+  }, []);
+
   const selectCell = useCallback((row: number, col: number) => {
-    setGame((prev) => {
-      // Don't allow selecting fixed cells
-      if (prev.board[row][col].isFixed) {
-        return { ...prev, selectedCell: null };
-      }
-      return {
-        ...prev,
-        selectedCell: { row, col },
-      };
-    });
+    setGame((prev) => ({
+      ...prev,
+      selectedCell: { row, col },
+    }));
   }, []);
 
   const inputNumber = useCallback(
@@ -270,6 +279,7 @@ export function SudokuGame() {
       if (!game.selectedCell || game.isComplete) return;
 
       const { row, col } = game.selectedCell;
+      // Only allow input on non-fixed cells
       if (game.board[row][col].isFixed) return;
 
       setGame((prev) => {
@@ -299,6 +309,12 @@ export function SudokuGame() {
           r.every((c) => c.value !== 0 && c.isValid)
         );
 
+        if (isComplete) {
+          setTimeout(() => {
+            setShowLeaderboard(true);
+          }, 1500);
+        }
+
         return { ...prev, board: newBoard, isComplete };
       });
     },
@@ -325,27 +341,42 @@ export function SudokuGame() {
 
       const maxNum = game.board.length;
       const keyNum = parseInt(e.key, 10);
+
+      // Number input - only works on non-fixed cells
       if (e.key >= "1" && e.key <= "9" && keyNum <= maxNum) {
-        inputNumber(keyNum);
+        if (game.selectedCell && !game.board[game.selectedCell.row][game.selectedCell.col].isFixed) {
+          inputNumber(keyNum);
+        }
       } else if (e.key === "Backspace" || e.key === "Delete") {
         clearCell();
       } else if (game.selectedCell) {
         const { row, col } = game.selectedCell;
-        const directionMap: Record<string, "up" | "down" | "left" | "right"> = {
-          ArrowUp: "up",
-          ArrowDown: "down",
-          ArrowLeft: "left",
-          ArrowRight: "right",
-        };
-        const direction = directionMap[e.key];
-        if (direction) {
-          const nextCell = getNextCell(game.board, row, col, direction);
-          if (nextCell) {
-            setGame((prev) => ({
-              ...prev,
-              selectedCell: nextCell,
-            }));
-          }
+        const size = game.board.length;
+
+        // Simple arrow navigation - move one cell at a time, wrap around
+        let newRow = row;
+        let newCol = col;
+
+        switch (e.key) {
+          case "ArrowUp":
+            newRow = row > 0 ? row - 1 : size - 1;
+            break;
+          case "ArrowDown":
+            newRow = row < size - 1 ? row + 1 : 0;
+            break;
+          case "ArrowLeft":
+            newCol = col > 0 ? col - 1 : size - 1;
+            break;
+          case "ArrowRight":
+            newCol = col < size - 1 ? col + 1 : 0;
+            break;
+        }
+
+        if (newRow !== row || newCol !== col) {
+          setGame((prev) => ({
+            ...prev,
+            selectedCell: { row: newRow, col: newCol },
+          }));
         }
       }
     },
@@ -389,6 +420,19 @@ export function SudokuGame() {
       <div className="flex flex-1 flex-col items-center justify-center gap-4 p-4 overflow-y-auto">
         {/* Board */}
         <div className="relative">
+          {/* Start overlay */}
+          {!game.isStarted && !game.isComplete && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/95">
+              <button
+                type="button"
+                onClick={startGame}
+                className="rounded-xl bg-sky-500 px-8 py-4 text-lg font-medium text-white shadow-lg transition hover:bg-sky-600"
+              >
+                开始游戏
+              </button>
+            </div>
+          )}
+
           {game.isComplete && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/90">
               <div className="text-center">
@@ -453,28 +497,71 @@ export function SudokuGame() {
         </div>
 
         {/* Number Pad */}
-        <div className="flex flex-col gap-2">
-          <div className={`grid gap-1.5 ${game.board.length === 6 ? 'grid-cols-3' : 'grid-cols-5'}`}>
-            {Array.from({ length: game.board.length }, (_, i) => i + 1).map((num) => (
+        <div className="flex flex-col gap-2 items-center">
+          {game.board.length === 6 ? (
+            // 6x6: 3x2 grid for numbers, clear button below
+            <>
+              <div className="grid grid-cols-3 gap-2">
+                {[1, 2, 3, 4, 5, 6].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => inputNumber(num)}
+                    disabled={game.isComplete}
+                    className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-400 text-lg font-normal text-white transition hover:bg-sky-500 disabled:opacity-50"
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
               <button
-                key={num}
                 type="button"
-                onClick={() => inputNumber(num)}
+                onClick={clearCell}
                 disabled={game.isComplete}
-                className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-400 text-lg font-normal text-white transition hover:bg-sky-500 disabled:opacity-50"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-red-300 bg-white text-sm font-normal text-red-400 transition hover:bg-red-50 disabled:opacity-50"
               >
-                {num}
+                清除
               </button>
-            ))}
-            <button
-              type="button"
-              onClick={clearCell}
-              disabled={game.isComplete}
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-red-300 bg-white text-sm font-normal text-red-400 transition hover:bg-red-50 disabled:opacity-50"
-            >
-              清除
-            </button>
-          </div>
+            </>
+          ) : (
+            // 9x9: 5 numbers in first row, 4 numbers + clear in second row
+            <>
+              <div className="grid grid-cols-5 gap-2">
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => inputNumber(num)}
+                    disabled={game.isComplete}
+                    className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-400 text-lg font-normal text-white transition hover:bg-sky-500 disabled:opacity-50"
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-5 gap-2">
+                {[6, 7, 8, 9].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => inputNumber(num)}
+                    disabled={game.isComplete}
+                    className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-400 text-lg font-normal text-white transition hover:bg-sky-500 disabled:opacity-50"
+                  >
+                    {num}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={clearCell}
+                  disabled={game.isComplete}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-red-300 bg-white text-sm font-normal text-red-400 transition hover:bg-red-50 disabled:opacity-50"
+                >
+                  清除
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -487,6 +574,15 @@ export function SudokuGame() {
           快捷键：数字键输入，方向键移动，Backspace 清除
         </p>
       </div>
+
+      {/* Leaderboard */}
+      {showLeaderboard && (
+        <Leaderboard
+          gameType="sudoku"
+          onClose={() => setShowLeaderboard(false)}
+          newScore={game.isComplete ? { time: game.elapsedTime, difficulty: DIFFICULTY_LEVELS[game.difficulty].name } : null}
+        />
+      )}
     </div>
   );
 }

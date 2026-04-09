@@ -208,8 +208,8 @@ describe("6x6 Sudoku", () => {
 
   it("keyboard navigation respects 6x6 boundaries", () => {
     // This will be tested via getNextCell with 6x6 board
-    const board6x6 = Array(6).fill(null).map((_, row) =>
-      Array(6).fill(null).map((_, col) => ({
+    const board6x6 = Array(6).fill(null).map(() =>
+      Array(6).fill(null).map(() => ({
         value: 0,
         isFixed: false,
         isValid: true,

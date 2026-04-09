@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { Leaderboard } from "./Leaderboard";
 
 interface Card {
   id: string;
@@ -14,6 +15,10 @@ interface GameState {
   messageType: "info" | "success" | "error";
   score: number;
   level: number;
+  isStarted: boolean;
+  isComplete: boolean;
+  startTime: number;
+  elapsedTime: number;
 }
 
 const OPERATORS = [
@@ -69,14 +74,14 @@ function getSolution(nums: number[]): string | null {
     return null;
   }
 
-  const exprs = nums.map((n, i) => `n${i}`);
+  const exprs = nums.map((_, i) => `n${i}`);
   const result = solve(nums, exprs);
   if (!result) return null;
 
   // Replace n0, n1, n2, n3 with actual numbers
   let solution = result;
   for (let i = 0; i < nums.length; i++) {
-    solution = solution.replaceAll(`n${i}`, nums[i].toString());
+    solution = solution.split(`n${i}`).join(nums[i].toString());
   }
   // Remove outermost parentheses if present
   if (solution.startsWith('(') && solution.endsWith(')')) {
@@ -145,6 +150,12 @@ function calculate(a: number, b: number, operator: string): number | null {
   }
 }
 
+function formatTime(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+}
+
 export function TwentyFourGame() {
   const [game, setGame] = useState<GameState>(() => ({
     cards: generateCards(),
@@ -154,9 +165,27 @@ export function TwentyFourGame() {
     messageType: "info",
     score: 0,
     level: 1,
+    isStarted: false,
+    isComplete: false,
+    startTime: Date.now(),
+    elapsedTime: 0,
   }));
 
   const [history, setHistory] = useState<Card[][]>([]);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+
+  // Timer effect
+  useEffect(() => {
+    if (!game.isStarted || game.isComplete) return;
+
+    const timer = setInterval(() => {
+      setGame((prev) => ({
+        ...prev,
+        elapsedTime: Math.floor((Date.now() - prev.startTime) / 1000),
+      }));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [game.isStarted, game.isComplete]);
 
   const newGame = useCallback(() => {
     const newCards = generateCards();
@@ -168,6 +197,10 @@ export function TwentyFourGame() {
       messageType: "info",
       score: game.score,
       level: game.level + 1,
+      isStarted: true,
+      isComplete: false,
+      startTime: Date.now(),
+      elapsedTime: 0,
     });
     setHistory([]);
   }, [game.score, game.level]);
@@ -182,6 +215,10 @@ export function TwentyFourGame() {
       messageType: "info",
       score: 0,
       level: 1,
+      isStarted: false,
+      isComplete: false,
+      startTime: Date.now(),
+      elapsedTime: 0,
     });
     setHistory([]);
   }, []);
@@ -270,10 +307,11 @@ export function TwentyFourGame() {
             message: "🎉 恭喜！你算出了 24！",
             messageType: "success",
             score: prev.score + 1,
+            isComplete: true,
           }));
           setTimeout(() => {
-            newGame();
-          }, 2000);
+            setShowLeaderboard(true);
+          }, 1500);
           return;
         } else {
           setGame((prev) => ({
@@ -341,7 +379,9 @@ export function TwentyFourGame() {
         <div className="flex items-center gap-4">
           <div>
             <h2 className="text-lg font-semibold">第 {game.level} 关</h2>
-            <p className="text-sm text-slate-400">得分: {game.score}</p>
+            <p className="text-sm text-slate-400">
+              得分: {game.score} | 时间: {formatTime(game.elapsedTime)}
+            </p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -365,7 +405,26 @@ export function TwentyFourGame() {
       </div>
 
       {/* Game Area */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-6 p-6 overflow-y-auto">
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 p-6 overflow-y-auto relative">
+        {/* Start overlay */}
+        {!game.isStarted && !game.isComplete && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-900/95">
+            <button
+              type="button"
+              onClick={() =>
+                setGame((prev) => ({
+                  ...prev,
+                  isStarted: true,
+                  startTime: Date.now(),
+                }))
+              }
+              className="rounded-xl bg-amber-500 px-8 py-4 text-lg font-medium text-slate-900 shadow-lg transition hover:bg-amber-400"
+            >
+              开始游戏
+            </button>
+          </div>
+        )}
+
         {/* Cards Grid */}
         <div className="grid grid-cols-2 gap-4">
           {game.cards.map((card) => (
@@ -442,6 +501,15 @@ export function TwentyFourGame() {
       <div className="border-t border-slate-700 bg-slate-800/50 px-6 py-4 text-center text-xs text-slate-400">
         <p>选择两个数字和一个运算符，逐步计算出 24</p>
       </div>
+
+      {/* Leaderboard */}
+      {showLeaderboard && (
+        <Leaderboard
+          gameType="24"
+          onClose={() => setShowLeaderboard(false)}
+          newScore={game.isComplete ? { time: game.elapsedTime } : null}
+        />
+      )}
     </div>
   );
 }

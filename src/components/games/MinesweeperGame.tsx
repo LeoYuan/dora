@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { Leaderboard } from "./Leaderboard";
 
 interface Cell {
   isMine: boolean;
@@ -12,6 +13,7 @@ interface GameState {
   gameStatus: "playing" | "won" | "lost";
   mineCount: number;
   flagCount: number;
+  isStarted: boolean;
   startTime: number;
   elapsedTime: number;
   difficulty: "easy" | "medium" | "hard";
@@ -84,14 +86,16 @@ export function MinesweeperGame() {
       gameStatus: "playing",
       mineCount: config.mines,
       flagCount: 0,
+      isStarted: false,
       startTime: Date.now(),
       elapsedTime: 0,
       difficulty: "easy",
     };
   });
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   useEffect(() => {
-    if (game.gameStatus !== "playing") return;
+    if (!game.isStarted || game.gameStatus !== "playing") return;
     const timer = setInterval(() => {
       setGame((prev) => ({
         ...prev,
@@ -99,7 +103,7 @@ export function MinesweeperGame() {
       }));
     }, 1000);
     return () => clearInterval(timer);
-  }, [game.gameStatus, game.startTime]);
+  }, [game.isStarted, game.gameStatus, game.startTime]);
 
   const newGame = useCallback((difficulty: "easy" | "medium" | "hard") => {
     const config = DIFFICULTY_CONFIG[difficulty];
@@ -108,10 +112,19 @@ export function MinesweeperGame() {
       gameStatus: "playing",
       mineCount: config.mines,
       flagCount: 0,
+      isStarted: false,
       startTime: Date.now(),
       elapsedTime: 0,
       difficulty,
     });
+  }, []);
+
+  const startGame = useCallback(() => {
+    setGame((prev) => ({
+      ...prev,
+      isStarted: true,
+      startTime: Date.now(),
+    }));
   }, []);
 
   const revealCell = useCallback(
@@ -122,8 +135,8 @@ export function MinesweeperGame() {
         const config = DIFFICULTY_CONFIG[prev.difficulty];
         let newBoard = prev.board.map((r) => r.map((c) => ({ ...c })));
 
-        // First click - regenerate board if it's a mine
-        if (prev.elapsedTime === 0 && !newBoard[row][col].isRevealed) {
+        // First click - start game and regenerate board if it's a mine
+        if (!prev.isStarted && !newBoard[row][col].isRevealed) {
           let attempts = 0;
           while (newBoard[row][col].isMine && attempts < 100) {
             newBoard = createBoard(config.rows, config.cols, config.mines, row, col);
@@ -167,6 +180,9 @@ export function MinesweeperGame() {
         const revealedCount = newBoard.flat().filter((c) => c.isRevealed).length;
         const totalCells = config.rows * config.cols;
         if (revealedCount === totalCells - config.mines) {
+          setTimeout(() => {
+            setShowLeaderboard(true);
+          }, 1500);
           return { ...prev, board: newBoard, gameStatus: "won" };
         }
 
@@ -230,6 +246,19 @@ export function MinesweeperGame() {
       {/* Game Area */}
       <div className="flex flex-1 items-center justify-center p-4">
         <div className="relative">
+          {/* Start overlay */}
+          {!game.isStarted && game.gameStatus === "playing" && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/95">
+              <button
+                type="button"
+                onClick={startGame}
+                className="rounded-xl bg-sky-500 px-8 py-4 text-lg font-medium text-white shadow-lg transition hover:bg-sky-600"
+              >
+                开始游戏
+              </button>
+            </div>
+          )}
+
           {/* Status Overlay */}
           {game.gameStatus !== "playing" && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/90">
@@ -306,6 +335,15 @@ export function MinesweeperGame() {
         <p>规则：点击格子翻开，右键标记地雷，找出所有安全格子</p>
         <p className="mt-1 text-xs text-slate-400">左键点击翻开，右键点击插旗</p>
       </div>
+
+      {/* Leaderboard */}
+      {showLeaderboard && (
+        <Leaderboard
+          gameType="minesweeper"
+          onClose={() => setShowLeaderboard(false)}
+          newScore={game.gameStatus === "won" ? { time: game.elapsedTime, difficulty: DIFFICULTY_CONFIG[game.difficulty].name } : null}
+        />
+      )}
     </div>
   );
 }
