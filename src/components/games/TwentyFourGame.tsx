@@ -494,6 +494,14 @@ export function TwentyFourGame() {
             <span className="text-2xl">💡</span>
             <span className="text-xs text-slate-400">提示</span>
           </button>
+          <button
+            type="button"
+            onClick={() => setShowLeaderboard(true)}
+            className="flex flex-col items-center gap-2 rounded-xl bg-slate-800 px-6 py-3 transition hover:bg-slate-700"
+          >
+            <span className="text-2xl">🏆</span>
+            <span className="text-xs text-slate-400">排行榜</span>
+          </button>
         </div>
       </div>
 

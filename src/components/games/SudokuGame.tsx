@@ -496,6 +496,15 @@ export function SudokuGame() {
           </div>
         </div>
 
+        {/* Leaderboard Button */}
+        <button
+          type="button"
+          onClick={() => setShowLeaderboard(true)}
+          className="flex items-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-200"
+        >
+          <span>🏆</span> 查看排行榜
+        </button>
+
         {/* Number Pad */}
         <div className="flex flex-col gap-2 items-center">
           {game.board.length === 6 ? (

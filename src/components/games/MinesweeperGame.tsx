@@ -330,10 +330,21 @@ export function MinesweeperGame() {
         </div>
       </div>
 
-      {/* Instructions */}
-      <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 text-sm text-slate-400">
-        <p>规则：点击格子翻开，右键标记地雷，找出所有安全格子</p>
-        <p className="mt-1 text-xs text-slate-400">左键点击翻开，右键点击插旗</p>
+      {/* Instructions and Leaderboard */}
+      <div className="border-t border-slate-200 bg-slate-50 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-slate-400">
+            <p>规则：点击格子翻开，右键标记地雷，找出所有安全格子</p>
+            <p className="mt-1 text-xs text-slate-400">左键点击翻开，右键点击插旗</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowLeaderboard(true)}
+            className="flex items-center gap-2 rounded-lg bg-slate-200 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-300"
+          >
+            <span>🏆</span> 排行榜
+          </button>
+        </div>
       </div>
 
       {/* Leaderboard */}
