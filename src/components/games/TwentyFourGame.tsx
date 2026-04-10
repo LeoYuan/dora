@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect } from "react";
-import { Leaderboard } from "./Leaderboard";
 
 interface Card {
   id: string;
@@ -172,7 +171,6 @@ export function TwentyFourGame() {
   }));
 
   const [history, setHistory] = useState<Card[][]>([]);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   // Timer effect
   useEffect(() => {
@@ -309,9 +307,6 @@ export function TwentyFourGame() {
             score: prev.score + 1,
             isComplete: true,
           }));
-          setTimeout(() => {
-            setShowLeaderboard(true);
-          }, 1500);
           return;
         } else {
           setGame((prev) => ({
@@ -494,14 +489,6 @@ export function TwentyFourGame() {
             <span className="text-2xl">💡</span>
             <span className="text-xs text-slate-400">提示</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setShowLeaderboard(true)}
-            className="flex flex-col items-center gap-2 rounded-xl bg-slate-800 px-6 py-3 transition hover:bg-slate-700"
-          >
-            <span className="text-2xl">🏆</span>
-            <span className="text-xs text-slate-400">排行榜</span>
-          </button>
         </div>
       </div>
 
@@ -509,15 +496,6 @@ export function TwentyFourGame() {
       <div className="border-t border-slate-700 bg-slate-800/50 px-6 py-4 text-center text-xs text-slate-400">
         <p>选择两个数字和一个运算符，逐步计算出 24</p>
       </div>
-
-      {/* Leaderboard */}
-      {showLeaderboard && (
-        <Leaderboard
-          gameType="24"
-          onClose={() => setShowLeaderboard(false)}
-          newScore={game.isComplete ? { time: game.elapsedTime } : null}
-        />
-      )}
     </div>
   );
 }

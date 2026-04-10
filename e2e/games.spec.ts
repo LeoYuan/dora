@@ -210,12 +210,8 @@ test.describe('Games', () => {
       await page.evaluate(() => localStorage.removeItem('dora-game-leaderboard'));
     });
 
-    test('can open leaderboard from 24 game', async ({ page }) => {
-      await page.getByRole('button', { name: '算24点' }).click();
-
-      // Start the game first to dismiss the overlay
-      await page.getByRole('button', { name: '开始游戏' }).click();
-
+    test('can open leaderboard from game panel header', async ({ page }) => {
+      // Click the trophy button in the game panel header
       await page.getByRole('button', { name: '排行榜' }).click();
 
       // Verify leaderboard modal is shown
@@ -229,30 +225,7 @@ test.describe('Games', () => {
       await expect(leaderboardModal.getByRole('button', { name: '扫雷' })).toBeVisible();
     });
 
-    test('can open leaderboard from sudoku game', async ({ page }) => {
-      await page.getByRole('button', { name: '数独' }).click();
-      await page.getByRole('button', { name: '查看排行榜' }).click();
-
-      const leaderboardModal = page.locator('.z-50').filter({ hasText: '排行榜' });
-      await expect(leaderboardModal.getByRole('heading', { name: '排行榜' })).toBeVisible();
-      await expect(leaderboardModal.getByText('前20名')).toBeVisible();
-    });
-
-    test('can open leaderboard from minesweeper game', async ({ page }) => {
-      await page.getByRole('button', { name: '扫雷' }).click();
-      await page.getByRole('button', { name: '排行榜' }).click();
-
-      const leaderboardModal = page.locator('.z-50').filter({ hasText: '排行榜' });
-      await expect(leaderboardModal.getByRole('heading', { name: '排行榜' })).toBeVisible();
-      await expect(leaderboardModal.getByText('前20名')).toBeVisible();
-    });
-
     test('can close leaderboard', async ({ page }) => {
-      await page.getByRole('button', { name: '算24点' }).click();
-
-      // Start the game first to dismiss the overlay
-      await page.getByRole('button', { name: '开始游戏' }).click();
-
       await page.getByRole('button', { name: '排行榜' }).click();
 
       const leaderboardModal = page.locator('.z-50').filter({ hasText: '排行榜' });
@@ -261,16 +234,11 @@ test.describe('Games', () => {
       // Click close button (X)
       await leaderboardModal.getByRole('button', { name: '✕' }).click();
 
-      // Leaderboard should be closed, game should be visible
-      await expect(page.getByText('第 1 关')).toBeVisible();
+      // Leaderboard should be closed, game panel should still be visible
+      await expect(page.getByRole('button', { name: '算24点' })).toBeVisible();
     });
 
     test('can switch between game tabs in leaderboard', async ({ page }) => {
-      await page.getByRole('button', { name: '算24点' }).click();
-
-      // Start the game first to dismiss the overlay
-      await page.getByRole('button', { name: '开始游戏' }).click();
-
       await page.getByRole('button', { name: '排行榜' }).click();
 
       const leaderboardModal = page.locator('.z-50').filter({ hasText: '排行榜' });
@@ -286,11 +254,6 @@ test.describe('Games', () => {
     });
 
     test('shows empty state when no scores', async ({ page }) => {
-      await page.getByRole('button', { name: '算24点' }).click();
-
-      // Start the game first to dismiss the overlay
-      await page.getByRole('button', { name: '开始游戏' }).click();
-
       await page.getByRole('button', { name: '排行榜' }).click();
 
       const leaderboardModal = page.locator('.z-50').filter({ hasText: '排行榜' });
@@ -299,11 +262,6 @@ test.describe('Games', () => {
     });
 
     test('leaderboard persists scores in localStorage', async ({ page }) => {
-      await page.getByRole('button', { name: '算24点' }).click();
-
-      // Start the game first to dismiss the overlay
-      await page.getByRole('button', { name: '开始游戏' }).click();
-
       await page.getByRole('button', { name: '排行榜' }).click();
 
       // Initially empty

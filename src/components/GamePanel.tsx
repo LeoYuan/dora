@@ -2,6 +2,7 @@ import { useState } from "react";
 import { TwentyFourGame } from "./games/TwentyFourGame";
 import { SudokuGame } from "./games/SudokuGame";
 import { MinesweeperGame } from "./games/MinesweeperGame";
+import { Leaderboard } from "./games/Leaderboard";
 
 type GameType = "24" | "sudoku" | "minesweeper";
 
@@ -11,6 +12,7 @@ interface GamePanelProps {
 
 export function GamePanel({ onClose }: GamePanelProps) {
   const [currentGame, setCurrentGame] = useState<GameType>("24");
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   return (
     <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-slate-900/10">
@@ -64,14 +66,26 @@ export function GamePanel({ onClose }: GamePanelProps) {
             </button>
           </div>
 
-          <button
-            type="button"
-            aria-label="Close game panel"
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/14 text-sm text-white backdrop-blur-sm transition-all hover:bg-white/24"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Leaderboard Button */}
+            <button
+              type="button"
+              onClick={() => setShowLeaderboard(true)}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm text-white backdrop-blur-sm transition-all hover:bg-white/20"
+              aria-label="排行榜"
+            >
+              🏆
+            </button>
+
+            <button
+              type="button"
+              aria-label="Close game panel"
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm text-white backdrop-blur-sm transition-all hover:bg-white/20"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         {/* Game Content */}
@@ -80,6 +94,14 @@ export function GamePanel({ onClose }: GamePanelProps) {
           {currentGame === "sudoku" && <SudokuGame />}
           {currentGame === "minesweeper" && <MinesweeperGame />}
         </div>
+
+        {/* Leaderboard Modal */}
+        {showLeaderboard && (
+          <Leaderboard
+            gameType={currentGame}
+            onClose={() => setShowLeaderboard(false)}
+          />
+        )}
       </div>
     </div>
   );

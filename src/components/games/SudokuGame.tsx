@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect } from "react";
-import { Leaderboard } from "./Leaderboard";
 
 interface Cell {
   value: number;
@@ -233,7 +232,6 @@ export function SudokuGame() {
     startTime: Date.now(),
     elapsedTime: 0,
   }));
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   useEffect(() => {
     if (!game.isStarted || game.isComplete) return;
@@ -308,12 +306,6 @@ export function SudokuGame() {
         const isComplete = newBoard.every((r) =>
           r.every((c) => c.value !== 0 && c.isValid)
         );
-
-        if (isComplete) {
-          setTimeout(() => {
-            setShowLeaderboard(true);
-          }, 1500);
-        }
 
         return { ...prev, board: newBoard, isComplete };
       });
@@ -496,15 +488,6 @@ export function SudokuGame() {
           </div>
         </div>
 
-        {/* Leaderboard Button */}
-        <button
-          type="button"
-          onClick={() => setShowLeaderboard(true)}
-          className="flex items-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-200"
-        >
-          <span>🏆</span> 查看排行榜
-        </button>
-
         {/* Number Pad */}
         <div className="flex flex-col gap-2 items-center">
           {game.board.length === 6 ? (
@@ -583,15 +566,6 @@ export function SudokuGame() {
           快捷键：数字键输入，方向键移动，Backspace 清除
         </p>
       </div>
-
-      {/* Leaderboard */}
-      {showLeaderboard && (
-        <Leaderboard
-          gameType="sudoku"
-          onClose={() => setShowLeaderboard(false)}
-          newScore={game.isComplete ? { time: game.elapsedTime, difficulty: DIFFICULTY_LEVELS[game.difficulty].name } : null}
-        />
-      )}
     </div>
   );
 }
