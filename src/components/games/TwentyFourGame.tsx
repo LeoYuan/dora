@@ -155,22 +155,83 @@ function formatTime(seconds: number): string {
   return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 
+const STORAGE_KEY = "dora-game-24-state";
+
+interface SavedGameState {
+  cards: Card[];
+  score: number;
+  level: number;
+  isStarted: boolean;
+}
+
+function loadSavedState(): SavedGameState | null {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+function saveGameState(state: SavedGameState) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // ignore
+  }
+}
+
 export function TwentyFourGame() {
-  const [game, setGame] = useState<GameState>(() => ({
-    cards: generateCards(),
-    selectedCardId: null,
-    selectedOperator: null,
-    message: "选择两个数字和一个运算符",
-    messageType: "info",
-    score: 0,
-    level: 1,
-    isStarted: false,
-    isComplete: false,
-    startTime: Date.now(),
-    elapsedTime: 0,
-  }));
+  const [game, setGame] = useState<GameState>(() => {
+    const saved = loadSavedState();
+    if (saved && saved.cards.length > 1) {
+      // Resume from saved state (only if game is not complete)
+      return {
+        cards: saved.cards,
+        selectedCardId: null,
+        selectedOperator: null,
+        message: "选择两个数字和一个运算符",
+        messageType: "info",
+        score: saved.score,
+        level: saved.level,
+        isStarted: saved.isStarted,
+        isComplete: false,
+        startTime: Date.now(),
+        elapsedTime: 0,
+      };
+    }
+    // Start new game
+    return {
+      cards: generateCards(),
+      selectedCardId: null,
+      selectedOperator: null,
+      message: "选择两个数字和一个运算符",
+      messageType: "info",
+      score: 0,
+      level: 1,
+      isStarted: false,
+      isComplete: false,
+      startTime: Date.now(),
+      elapsedTime: 0,
+    };
+  });
 
   const [history, setHistory] = useState<Card[][]>([]);
+
+  // Save game state when cards change (but not during completion)
+  useEffect(() => {
+    if (game.cards.length > 1 || !game.isComplete) {
+      saveGameState({
+        cards: game.cards,
+        score: game.score,
+        level: game.level,
+        isStarted: game.isStarted,
+      });
+    }
+  }, [game.cards, game.score, game.level, game.isStarted, game.isComplete]);
 
   // Timer effect
   useEffect(() => {
@@ -201,6 +262,13 @@ export function TwentyFourGame() {
       elapsedTime: 0,
     });
     setHistory([]);
+    // Clear saved state for new level
+    saveGameState({
+      cards: newCards,
+      score: game.score,
+      level: game.level + 1,
+      isStarted: true,
+    });
   }, [game.score, game.level]);
 
   const resetGame = useCallback(() => {
@@ -219,6 +287,12 @@ export function TwentyFourGame() {
       elapsedTime: 0,
     });
     setHistory([]);
+    // Clear saved state
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
   }, []);
 
   const undo = useCallback(() => {
@@ -306,6 +380,10 @@ export function TwentyFourGame() {
       // Check win condition
       if (newCards.length === 1) {
         if (Math.abs(newCards[0].value - 24) < 0.0001) {
+          // Auto-start next level after a short delay
+          setTimeout(() => {
+            newGame();
+          }, 1500);
           setGame((prev) => ({
             ...prev,
             cards: newCards,
@@ -314,7 +392,7 @@ export function TwentyFourGame() {
             message: "🎉 恭喜！你算出了 24！",
             messageType: "success",
             score: prev.score + 1,
-            isComplete: true,
+            isComplete: false, // Don't mark as complete, auto-continue
           }));
           return;
         } else {
