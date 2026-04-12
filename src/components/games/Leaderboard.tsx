@@ -157,7 +157,7 @@ export function Leaderboard({ gameType, onClose, newScore }: LeaderboardProps) {
                         : "bg-slate-100 text-slate-400"
                     }`}
                   >
-                    {index + 1}
+                    {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1}
                   </div>
 
                   {/* Player Info */}

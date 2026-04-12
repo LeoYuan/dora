@@ -6,6 +6,25 @@ interface Card {
   display: string;
 }
 
+// Exported for testing
+export function replaceCards(
+  cards: Card[],
+  firstCardId: string,
+  secondCardId: string,
+  resultValue: number
+): Card[] {
+  const newCard: Card = {
+    id: `result-${Date.now()}`,
+    value: resultValue,
+    display: Number.isInteger(resultValue) ? resultValue.toString() : resultValue.toFixed(2),
+  };
+
+  // Filter out the two used cards and add the result
+  return cards
+    .filter((c) => c.id !== firstCardId && c.id !== secondCardId)
+    .concat(newCard);
+}
+
 interface GameState {
   cards: Card[];
   selectedCardId: string | null;
@@ -367,19 +386,8 @@ export function TwentyFourGame({ onComplete }: TwentyFourGameProps) {
         display: Number.isInteger(result) ? result.toString() : result.toFixed(2),
       };
 
-      // Replace the two used cards with the result, keeping other cards in place
-      // First find the indices to determine which comes first
-      const firstIndex = game.cards.findIndex((c) => c.id === firstCard.id);
-      const secondIndex = game.cards.findIndex((c) => c.id === card.id);
-      const minIndex = Math.min(firstIndex, secondIndex);
-      const maxIndex = Math.max(firstIndex, secondIndex);
-
-      // Build new array: keep cards before minIndex, add result, keep cards after maxIndex
-      const newCards = [
-        ...game.cards.slice(0, minIndex),
-        newCard,
-        ...game.cards.slice(maxIndex + 1),
-      ];
+      // Replace the two used cards with the result
+      const newCards = replaceCards(game.cards, firstCard.id, card.id, result);
 
       // Check win condition
       if (newCards.length === 1) {

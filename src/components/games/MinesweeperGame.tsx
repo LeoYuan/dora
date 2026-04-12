@@ -107,14 +107,14 @@ export function MinesweeperGame({ onComplete }: MinesweeperGameProps) {
     return () => clearInterval(timer);
   }, [game.isStarted, game.gameStatus, game.startTime]);
 
-  const newGame = useCallback((difficulty: "easy" | "medium" | "hard") => {
+  const newGame = useCallback((difficulty: "easy" | "medium" | "hard", autoStart = false) => {
     const config = DIFFICULTY_CONFIG[difficulty];
     setGame({
       board: createBoard(config.rows, config.cols, config.mines),
       gameStatus: "playing",
       mineCount: config.mines,
       flagCount: 0,
-      isStarted: false,
+      isStarted: autoStart,
       startTime: Date.now(),
       elapsedTime: 0,
       difficulty,
@@ -273,7 +273,7 @@ export function MinesweeperGame({ onComplete }: MinesweeperGameProps) {
                 <div className="text-sm text-slate-500">用时: {formatTime(game.elapsedTime)}</div>
                 <button
                   type="button"
-                  onClick={() => newGame(game.difficulty)}
+                  onClick={() => newGame(game.difficulty, true)}
                   className="cursor-pointer mt-4 rounded-lg bg-sky-400 px-4 py-2 text-sm font-normal text-white transition hover:bg-sky-500"
                 >
                   再玩一次

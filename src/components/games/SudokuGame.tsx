@@ -249,13 +249,13 @@ export function SudokuGame({ onComplete }: SudokuGameProps) {
     return () => clearInterval(timer);
   }, [game.isStarted, game.isComplete]);
 
-  const newGame = useCallback((difficulty: "easy" | "medium" | "hard") => {
+  const newGame = useCallback((difficulty: "easy" | "medium" | "hard", autoStart = false) => {
     setGame({
       board: generateSudoku(DIFFICULTY_LEVELS[difficulty]),
       selectedCell: null,
       difficulty,
       isComplete: false,
-      isStarted: false,
+      isStarted: autoStart,
       startTime: Date.now(),
       elapsedTime: 0,
     });
@@ -442,6 +442,13 @@ export function SudokuGame({ onComplete }: SudokuGameProps) {
                 <div className="text-sm text-slate-500">
                   用时: {formatTime(game.elapsedTime)}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => newGame(game.difficulty, true)}
+                  className="cursor-pointer mt-4 rounded-lg bg-sky-400 px-4 py-2 text-sm font-normal text-white transition hover:bg-sky-500"
+                >
+                  再玩一次
+                </button>
               </div>
             </div>
           )}
@@ -500,8 +507,8 @@ export function SudokuGame({ onComplete }: SudokuGameProps) {
         {/* Number Pad */}
         <div className="flex flex-col gap-2 items-center">
           {game.board.length === 6 ? (
-            // 6x6: 3x3 grid for numbers + clear button in one row
-            <div className="grid grid-cols-3 gap-2">
+            // 6x6: 7 buttons in one row (1-6 + clear)
+            <div className="flex gap-2">
               {[1, 2, 3, 4, 5, 6].map((num) => (
                 <button
                   key={num}
@@ -517,7 +524,7 @@ export function SudokuGame({ onComplete }: SudokuGameProps) {
                 type="button"
                 onClick={clearCell}
                 disabled={game.isComplete}
-                className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-lg border border-red-300 bg-white text-xs font-normal text-red-400 transition hover:bg-red-50 disabled:opacity-50"
+                className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-lg border border-red-300 bg-white text-[10px] font-normal text-red-400 transition hover:bg-red-50 disabled:opacity-50"
               >
                 清除
               </button>
