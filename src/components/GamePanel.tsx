@@ -47,7 +47,7 @@ export function GamePanel({ onClose }: GamePanelProps) {
               className={`cursor-pointer rounded-md px-3 py-1.5 text-xs font-normal transition ${
                 currentGame === "24"
                   ? "bg-white text-purple-400"
-                  : "bg-white/20 text-white/80 hover:bg-white/30"
+                  : "bg-white/20 text-white/60 hover:bg-white/30 hover:text-white/80"
               }`}
             >
               算24点
@@ -58,7 +58,7 @@ export function GamePanel({ onClose }: GamePanelProps) {
               className={`cursor-pointer rounded-md px-3 py-1.5 text-xs font-normal transition ${
                 currentGame === "sudoku"
                   ? "bg-white text-purple-400"
-                  : "bg-white/20 text-white/80 hover:bg-white/30"
+                  : "bg-white/20 text-white/60 hover:bg-white/30 hover:text-white/80"
               }`}
             >
               数独
@@ -69,7 +69,7 @@ export function GamePanel({ onClose }: GamePanelProps) {
               className={`cursor-pointer rounded-md px-3 py-1.5 text-xs font-normal transition ${
                 currentGame === "minesweeper"
                   ? "bg-white text-purple-400"
-                  : "bg-white/20 text-white/80 hover:bg-white/30"
+                  : "bg-white/20 text-white/60 hover:bg-white/30 hover:text-white/80"
               }`}
             >
               扫雷
