@@ -379,7 +379,7 @@ export function TwentyFourGame() {
 
       // Check win condition
       if (newCards.length === 1) {
-        if (Math.abs(newCards[0].value - 24) < 0.0001) {
+        if (newCards[0].value === 24) {
           // Auto-start next level after a short delay
           setTimeout(() => {
             newGame();
