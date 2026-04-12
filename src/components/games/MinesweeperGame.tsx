@@ -247,8 +247,8 @@ export function MinesweeperGame({ onComplete }: MinesweeperGameProps) {
       </div>
 
       {/* Game Area */}
-      <div className="flex flex-1 items-center justify-center p-4">
-        <div className="relative">
+      <div className="flex flex-1 items-center justify-center p-4 overflow-auto">
+        <div className="relative max-w-full">
           {/* Start overlay */}
           {!game.isStarted && game.gameStatus === "playing" && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/95">
@@ -297,7 +297,8 @@ export function MinesweeperGame({ onComplete }: MinesweeperGameProps) {
                   onClick={() => revealCell(rowIndex, colIndex)}
                   onContextMenu={(e) => toggleFlag(e, rowIndex, colIndex)}
                   className={`
-                    cursor-pointer flex h-10 w-10 items-center justify-center text-sm font-medium
+                    cursor-pointer flex items-center justify-center text-sm font-medium
+                    ${config.cols > 16 ? "h-8 w-8" : "h-10 w-10"}
                     ${cell.isRevealed
                       ? cell.isMine
                         ? "bg-red-500 text-white"
