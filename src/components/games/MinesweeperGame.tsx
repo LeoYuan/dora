@@ -15,7 +15,7 @@ interface GameState {
   isStarted: boolean;
   startTime: number;
   elapsedTime: number;
-  difficulty: "easy" | "medium" | "hard";
+  difficulty: "easy" | "medium";
 }
 
 const DIFFICULTY_CONFIG = {
@@ -107,7 +107,7 @@ export function MinesweeperGame({ onComplete }: MinesweeperGameProps) {
     return () => clearInterval(timer);
   }, [game.isStarted, game.gameStatus, game.startTime]);
 
-  const newGame = useCallback((difficulty: "easy" | "medium" | "hard", autoStart = false) => {
+  const newGame = useCallback((difficulty: "easy" | "medium", autoStart = false) => {
     const config = DIFFICULTY_CONFIG[difficulty];
     setGame({
       board: createBoard(config.rows, config.cols, config.mines),
@@ -229,7 +229,7 @@ export function MinesweeperGame({ onComplete }: MinesweeperGameProps) {
           </p>
         </div>
         <div className="flex gap-2">
-          {(["easy", "medium", "hard"] as const).map((diff) => (
+          {(["easy", "medium"] as const).map((diff) => (
             <button
               key={diff}
               type="button"
@@ -286,7 +286,7 @@ export function MinesweeperGame({ onComplete }: MinesweeperGameProps) {
           <div
             className="grid gap-0.5 rounded-lg border-2 border-slate-400 bg-slate-400 p-0.5"
             style={{
-              gridTemplateColumns: `repeat(${config.cols}, ${config.cols > 16 ? 'minmax(28px, 32px)' : 'minmax(36px, 40px)'})`,
+              gridTemplateColumns: `repeat(${config.cols}, ${config.cols > 16 ? '28px' : config.cols > 9 ? '32px' : '40px'})`,
             }}
           >
             {game.board.map((row, rowIndex) =>
@@ -298,7 +298,7 @@ export function MinesweeperGame({ onComplete }: MinesweeperGameProps) {
                   onContextMenu={(e) => toggleFlag(e, rowIndex, colIndex)}
                   className={`
                     cursor-pointer flex items-center justify-center text-sm font-medium
-                    ${config.cols > 16 ? "h-8 w-8" : "h-10 w-10"}
+                    ${config.cols > 16 ? "h-7 w-7 text-xs" : config.cols > 9 ? "h-8 w-8 text-xs" : "h-10 w-10"}
                     ${cell.isRevealed
                       ? cell.isMine
                         ? "bg-red-500 text-white"

@@ -147,25 +147,8 @@ export function MemoPad({ onClose }: MemoPadProps) {
     setEditingContent("");
   };
 
-  const addMemoToCompanionMemory = async (memo: Memo) => {
-    const item = {
-      id: `${memo.id}-memory-${Date.now()}`,
-      content: memo.content,
-      source: "memo" as const,
-      createdAt: new Date().toISOString(),
-      isPinned: memo.isPinned,
-    };
-
-    try {
-      await invoke("save_companion_memory_item", { item });
-    } catch {
-      // Keep UI behavior deterministic even if backend fails.
-    }
-  };
-
   const getDeleteButtonLabel = (memo: Memo) => `Delete memo ${memo.content}`;
   const getEditButtonLabel = (memo: Memo) => `Edit memo ${memo.content}`;
-  const getAddToMemoryLabel = (memo: Memo) => `Add memo ${memo.content} to companion memory`;
   const getSaveButtonLabel = (memo: Memo) => `Save memo ${memo.id}`;
   const getCancelButtonLabel = (memo: Memo) => `Cancel editing memo ${memo.id}`;
   const getEditInputLabel = (memo: Memo) => `Edit memo input ${memo.id}`;
@@ -183,7 +166,6 @@ export function MemoPad({ onClose }: MemoPadProps) {
   const getSaveButtonText = () => "保存";
   const getDeleteButtonText = () => "✕";
   const getEditButtonText = () => "✎";
-  const getAddToMemoryButtonText = () => "记住";
   const getMemoPlaceholder = () => "写下你的想法...";
   const getSearchPlaceholder = () => "搜索便签...";
   const getPanelTitle = () => "便签";
@@ -310,20 +292,20 @@ export function MemoPad({ onClose }: MemoPadProps) {
                     className={`group relative cursor-grab rounded-xl border p-4 transition-transform ${colors.bg} ${colors.border}`}
                   >
                     {editingMemoId === memo.id ? (
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <input
                           aria-label={getEditInputLabel(memo)}
                           type="text"
                           value={editingContent}
                           onChange={(event) => setEditingContent(event.target.value)}
-                          className="w-full rounded-lg border border-white/70 bg-white/80 px-3 py-2 text-sm outline-none"
+                          className="w-full rounded-lg border border-yellow-300 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-yellow-400"
                         />
                         <div className="flex gap-2">
                           <button
                             type="button"
                             aria-label={getSaveButtonLabel(memo)}
                             onClick={() => void saveEditedMemo(memo)}
-                            className="rounded-lg bg-white/80 px-3 py-1 text-xs font-normal text-gray-500"
+                            className="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-medium text-white hover:bg-yellow-500"
                           >
                             {getSaveButtonText()}
                           </button>
@@ -334,7 +316,7 @@ export function MemoPad({ onClose }: MemoPadProps) {
                               setEditingMemoId(null);
                               setEditingContent("");
                             }}
-                            className="rounded-lg bg-white/60 px-3 py-1 text-xs font-normal text-gray-500"
+                            className="rounded-lg border border-yellow-300 bg-white px-3 py-1.5 text-xs font-medium text-yellow-600 hover:bg-yellow-50"
                           >
                             {getCancelButtonText()}
                           </button>
@@ -347,24 +329,14 @@ export function MemoPad({ onClose }: MemoPadProps) {
                     )}
                     <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                       {canShowActions(memo) && (
-                        <>
-                          <button
-                            type="button"
-                            aria-label={getAddToMemoryLabel(memo)}
-                            onClick={() => void addMemoToCompanionMemory(memo)}
-                            className="rounded-full bg-white/70 px-2 py-1 text-[11px] font-normal text-gray-400 hover:bg-white"
-                          >
-                            {getAddToMemoryButtonText()}
-                          </button>
-                          <button
-                            type="button"
-                            aria-label={getEditButtonLabel(memo)}
-                            onClick={() => startEditingMemo(memo)}
-                            className="flex h-6 w-6 items-center justify-center rounded-full bg-white/50 text-gray-400 hover:bg-white/80"
-                          >
-                            {getEditButtonText()}
-                          </button>
-                        </>
+                        <button
+                          type="button"
+                          aria-label={getEditButtonLabel(memo)}
+                          onClick={() => startEditingMemo(memo)}
+                          className="flex h-6 w-6 items-center justify-center rounded-full bg-white/50 text-gray-400 hover:bg-white/80"
+                        >
+                          {getEditButtonText()}
+                        </button>
                       )}
                       <button
                         type="button"

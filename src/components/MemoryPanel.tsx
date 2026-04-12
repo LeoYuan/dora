@@ -11,6 +11,8 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
   const [newMemoryInput, setNewMemoryInput] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"all" | "pinned">("all");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
 
   useEffect(() => {
     void loadMemory();
@@ -74,6 +76,37 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
     }
 
     setMemoryItems((prev) => sortMemoryItems(prev.filter((item) => item.id !== id)));
+  };
+
+  const startEditing = (item: CompanionMemoryItem) => {
+    setEditingId(item.id);
+    setEditingContent(item.content);
+  };
+
+  const saveEditing = async () => {
+    if (!editingId || !editingContent.trim()) return;
+
+    const updatedItem = memoryItems.find((item) => item.id === editingId);
+    if (!updatedItem) return;
+
+    const newItem = { ...updatedItem, content: editingContent.trim() };
+
+    try {
+      await invoke("save_companion_memory_item", { item: newItem });
+    } catch {
+      // Keep UI deterministic even if backend fails.
+    }
+
+    setMemoryItems((prev) =>
+      sortMemoryItems(prev.map((item) => (item.id === editingId ? newItem : item)))
+    );
+    setEditingId(null);
+    setEditingContent("");
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditingContent("");
   };
 
   const formatDate = (dateString: string) => {
@@ -209,9 +242,36 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
 
                   {/* Content */}
                   <div className="mb-3">
-                    <p className="text-sm leading-relaxed text-slate-500">
-                      {item.content}
-                    </p>
+                    {editingId === item.id ? (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          value={editingContent}
+                          onChange={(e) => setEditingContent(e.target.value)}
+                          className="w-full rounded-lg border border-violet-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-violet-400"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void saveEditing()}
+                            className="rounded-lg bg-violet-400 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-500"
+                          >
+                            保存
+                          </button>
+                          <button
+                            type="button"
+                            onClick={cancelEditing}
+                            className="rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-xs font-medium text-violet-600 hover:bg-violet-50"
+                          >
+                            取消
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm leading-relaxed text-slate-500">
+                        {item.content}
+                      </p>
+                    )}
                   </div>
 
                   {/* Footer */}
@@ -239,24 +299,35 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
 
                     {/* Actions */}
                     <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => void togglePinned(item.id, !item.isPinned)}
-                        className={`rounded-lg px-2.5 py-1 text-[10px] font-normal transition ${
-                          item.isPinned
-                            ? "text-violet-300 hover:bg-violet-50 hover:text-violet-400"
-                            : "text-slate-200 hover:bg-slate-100 hover:text-slate-300"
-                        }`}
-                      >
-                        {item.isPinned ? "取消置顶" : "置顶"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void deleteMemoryItem(item.id)}
-                        className="rounded-lg px-2.5 py-1 text-[10px] font-normal text-slate-200 transition hover:bg-rose-50 hover:text-rose-300"
-                      >
-                        删除
-                      </button>
+                      {editingId !== item.id && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => startEditing(item)}
+                            className="rounded-lg px-2.5 py-1 text-[10px] font-normal text-slate-200 transition hover:bg-slate-100 hover:text-slate-400"
+                          >
+                            编辑
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void togglePinned(item.id, !item.isPinned)}
+                            className={`rounded-lg px-2.5 py-1 text-[10px] font-normal transition ${
+                              item.isPinned
+                                ? "text-violet-300 hover:bg-violet-50 hover:text-violet-400"
+                                : "text-slate-200 hover:bg-slate-100 hover:text-slate-300"
+                            }`}
+                          >
+                            {item.isPinned ? "取消置顶" : "置顶"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void deleteMemoryItem(item.id)}
+                            className="rounded-lg px-2.5 py-1 text-[10px] font-normal text-slate-200 transition hover:bg-rose-50 hover:text-rose-300"
+                          >
+                            删除
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

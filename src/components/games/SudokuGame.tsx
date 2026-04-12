@@ -15,6 +15,7 @@ interface GameState {
   isStarted: boolean;
   startTime: number;
   elapsedTime: number;
+  hintCell: { row: number; col: number; value: number } | null;
 }
 
 interface DifficultyConfig {
@@ -235,6 +236,7 @@ export function SudokuGame({ onComplete }: SudokuGameProps) {
     isStarted: false,
     startTime: Date.now(),
     elapsedTime: 0,
+    hintCell: null,
   }));
 
   useEffect(() => {
@@ -258,6 +260,7 @@ export function SudokuGame({ onComplete }: SudokuGameProps) {
       isStarted: autoStart,
       startTime: Date.now(),
       elapsedTime: 0,
+      hintCell: null,
     });
   }, []);
 
@@ -268,6 +271,43 @@ export function SudokuGame({ onComplete }: SudokuGameProps) {
       startTime: Date.now(),
     }));
   }, []);
+
+  const showHint = useCallback(() => {
+    if (game.isComplete) return;
+
+    const config = DIFFICULTY_LEVELS[game.difficulty];
+    const size = game.board.length;
+
+    // Create a copy of the board for solving
+    const boardCopy: number[][] = Array(size)
+      .fill(null)
+      .map((_, row) =>
+        Array(size)
+          .fill(0)
+          .map((_, col) => game.board[row][col].value)
+      );
+
+    // Solve the puzzle to get the solution
+    if (!solveSudoku(boardCopy, config.boxRows, config.boxCols)) {
+      return; // No solution found
+    }
+
+    // Find the first empty cell and get its solved value
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        if (game.board[row][col].value === 0) {
+          const solvedValue = boardCopy[row][col];
+          setGame((prev) => ({
+            ...prev,
+            hintCell: { row, col, value: solvedValue },
+            selectedCell: { row, col },
+          }));
+
+          return;
+        }
+      }
+    }
+  }, [game.board, game.difficulty, game.isComplete]);
 
   const selectCell = useCallback((row: number, col: number) => {
     setGame((prev) => ({
@@ -316,7 +356,7 @@ export function SudokuGame({ onComplete }: SudokuGameProps) {
           onComplete(prev.elapsedTime, DIFFICULTY_LEVELS[prev.difficulty].name);
         }
 
-        return { ...prev, board: newBoard, isComplete };
+        return { ...prev, board: newBoard, isComplete, hintCell: null };
       });
     },
     [game.selectedCell, game.isComplete, game.board]
@@ -399,7 +439,17 @@ export function SudokuGame({ onComplete }: SudokuGameProps) {
             {DIFFICULTY_LEVELS[game.difficulty].name}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={showHint}
+            disabled={game.isComplete || !game.isStarted}
+            className="cursor-pointer flex items-center gap-1 rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-normal text-amber-600 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <span>💡</span>
+            <span>提示</span>
+          </button>
+          <div className="flex gap-2">
           {( ["easy", "medium", "hard"] as const).map((diff) => (
             <button
               key={diff}
@@ -414,11 +464,18 @@ export function SudokuGame({ onComplete }: SudokuGameProps) {
               {DIFFICULTY_LEVELS[diff].name}
             </button>
           ))}
+          </div>
         </div>
       </div>
 
       {/* Game Area */}
       <div className="flex flex-1 flex-col items-center justify-center gap-4 p-4 overflow-y-auto">
+        {/* Hint Banner */}
+        {game.hintCell && (
+          <div className="rounded-lg bg-amber-100 px-4 py-2 text-sm text-amber-700">
+            提示：试试在 ({game.hintCell.row + 1}, {game.hintCell.col + 1}) 填入 {game.hintCell.value}
+          </div>
+        )}
         {/* Board */}
         <div className="relative">
           {/* Start overlay */}
