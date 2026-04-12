@@ -222,7 +222,11 @@ export function getNextCell(
   return null;
 }
 
-export function SudokuGame() {
+interface SudokuGameProps {
+  onComplete?: (time: number, difficulty?: string) => void;
+}
+
+export function SudokuGame({ onComplete }: SudokuGameProps) {
   const [game, setGame] = useState<GameState>(() => ({
     board: generateSudoku(DIFFICULTY_LEVELS.easy),
     selectedCell: null,
@@ -306,6 +310,11 @@ export function SudokuGame() {
         const isComplete = newBoard.every((r) =>
           r.every((c) => c.value !== 0 && c.isValid)
         );
+
+        // Trigger onComplete callback when game is completed
+        if (isComplete && onComplete) {
+          onComplete(prev.elapsedTime, DIFFICULTY_LEVELS[prev.difficulty].name);
+        }
 
         return { ...prev, board: newBoard, isComplete };
       });
@@ -396,7 +405,7 @@ export function SudokuGame() {
               key={diff}
               type="button"
               onClick={() => newGame(diff)}
-              className={`rounded-lg px-3 py-1.5 text-sm font-normal transition ${
+              className={`cursor-pointer rounded-lg px-3 py-1.5 text-sm font-normal transition ${
                 game.difficulty === diff
                   ? "bg-sky-400 text-white"
                   : "border border-slate-200 bg-white text-slate-300 hover:bg-slate-50"
@@ -418,7 +427,7 @@ export function SudokuGame() {
               <button
                 type="button"
                 onClick={startGame}
-                className="rounded-xl bg-sky-500 px-8 py-4 text-lg font-medium text-white shadow-lg transition hover:bg-sky-600"
+                className="cursor-pointer rounded-xl bg-sky-500 px-8 py-4 text-lg font-medium text-white shadow-lg transition hover:bg-sky-600"
               >
                 开始游戏
               </button>
@@ -467,7 +476,7 @@ export function SudokuGame() {
                     type="button"
                     onClick={() => selectCell(rowIndex, colIndex)}
                     className={`
-                      flex items-center justify-center text-base font-normal transition-all
+                      cursor-pointer flex items-center justify-center text-base font-normal transition-all
                       ${config.size === 6 ? "h-10 w-10" : "h-8 w-8"}
                       ${isSelected
                         ? "bg-sky-300 ring-2 ring-sky-500 ring-inset z-10"
@@ -491,30 +500,28 @@ export function SudokuGame() {
         {/* Number Pad */}
         <div className="flex flex-col gap-2 items-center">
           {game.board.length === 6 ? (
-            // 6x6: 3x2 grid for numbers, clear button below
-            <>
-              <div className="grid grid-cols-3 gap-2">
-                {[1, 2, 3, 4, 5, 6].map((num) => (
-                  <button
-                    key={num}
-                    type="button"
-                    onClick={() => inputNumber(num)}
-                    disabled={game.isComplete}
-                    className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-400 text-lg font-normal text-white transition hover:bg-sky-500 disabled:opacity-50"
-                  >
-                    {num}
-                  </button>
-                ))}
-              </div>
+            // 6x6: 3x3 grid for numbers + clear button in one row
+            <div className="grid grid-cols-3 gap-2">
+              {[1, 2, 3, 4, 5, 6].map((num) => (
+                <button
+                  key={num}
+                  type="button"
+                  onClick={() => inputNumber(num)}
+                  disabled={game.isComplete}
+                  className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-lg bg-sky-400 text-lg font-normal text-white transition hover:bg-sky-500 disabled:opacity-50"
+                >
+                  {num}
+                </button>
+              ))}
               <button
                 type="button"
                 onClick={clearCell}
                 disabled={game.isComplete}
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-red-300 bg-white text-sm font-normal text-red-400 transition hover:bg-red-50 disabled:opacity-50"
+                className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-lg border border-red-300 bg-white text-xs font-normal text-red-400 transition hover:bg-red-50 disabled:opacity-50"
               >
                 清除
               </button>
-            </>
+            </div>
           ) : (
             // 9x9: 5 numbers in first row, 4 numbers + clear in second row
             <>

@@ -20,6 +20,10 @@ interface GameState {
   elapsedTime: number;
 }
 
+interface TwentyFourGameProps {
+  onComplete?: (time: number, difficulty?: string) => void;
+}
+
 const OPERATORS = [
   { symbol: "+", display: "＋" },
   { symbol: "-", display: "－" },
@@ -184,7 +188,7 @@ function saveGameState(state: SavedGameState) {
   }
 }
 
-export function TwentyFourGame() {
+export function TwentyFourGame({ onComplete }: TwentyFourGameProps) {
   const [game, setGame] = useState<GameState>(() => {
     const saved = loadSavedState();
     if (saved && saved.cards.length > 1) {
@@ -380,6 +384,10 @@ export function TwentyFourGame() {
       // Check win condition
       if (newCards.length === 1) {
         if (newCards[0].value === 24) {
+          // Trigger onComplete callback when level is completed
+          if (onComplete) {
+            onComplete(game.elapsedTime);
+          }
           // Auto-start next level after a short delay
           setTimeout(() => {
             newGame();
@@ -471,7 +479,7 @@ export function TwentyFourGame() {
             <button
               type="button"
               onClick={undo}
-              className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-medium transition hover:bg-slate-600"
+              className="cursor-pointer rounded-xl bg-slate-700 px-4 py-2 text-sm font-medium transition hover:bg-slate-600"
             >
               撤销
             </button>
@@ -479,7 +487,7 @@ export function TwentyFourGame() {
           <button
             type="button"
             onClick={resetGame}
-            className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-amber-400"
+            className="cursor-pointer rounded-xl bg-amber-500 px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-amber-400"
           >
             重玩
           </button>
@@ -500,7 +508,7 @@ export function TwentyFourGame() {
                   startTime: Date.now(),
                 }))
               }
-              className="rounded-xl bg-amber-500 px-8 py-4 text-lg font-medium text-slate-900 shadow-lg transition hover:bg-amber-400"
+              className="cursor-pointer rounded-xl bg-amber-500 px-8 py-4 text-lg font-medium text-slate-900 shadow-lg transition hover:bg-amber-400"
             >
               开始游戏
             </button>
@@ -519,7 +527,7 @@ export function TwentyFourGame() {
                 isCardSelected(card.id)
                   ? "bg-amber-400 text-slate-900 shadow-lg shadow-amber-400/30 scale-105"
                   : "bg-amber-500 text-white shadow-lg shadow-amber-500/20 hover:bg-amber-400 hover:scale-105"
-              } ${game.cards.length === 1 ? "cursor-default" : ""}`}
+              } ${game.cards.length === 1 ? "cursor-default" : "cursor-pointer"}`}
             >
               {card.display}
             </button>
@@ -534,7 +542,7 @@ export function TwentyFourGame() {
               type="button"
               onClick={() => selectOperator(op.symbol)}
               disabled={game.cards.length < 2}
-              className={`flex h-14 w-14 items-center justify-center rounded-xl text-3xl font-bold transition-all ${
+              className={`cursor-pointer flex h-14 w-14 items-center justify-center rounded-xl text-3xl font-bold transition-all ${
                 game.selectedOperator === op.symbol
                   ? "bg-purple-500 text-white shadow-lg shadow-purple-500/30 scale-110"
                   : "bg-slate-800 text-purple-400 shadow-lg hover:bg-slate-700 hover:scale-105"
@@ -563,7 +571,7 @@ export function TwentyFourGame() {
           <button
             type="button"
             onClick={newGame}
-            className="flex items-center gap-1.5 rounded-lg bg-slate-800 px-3 py-1.5 transition hover:bg-slate-700"
+            className="cursor-pointer flex items-center gap-1.5 rounded-lg bg-slate-800 px-3 py-1.5 transition hover:bg-slate-700"
           >
             <span className="text-base">🎮</span>
             <span className="text-[10px] text-slate-400">新游戏</span>
@@ -571,7 +579,7 @@ export function TwentyFourGame() {
           <button
             type="button"
             onClick={showHint}
-            className="flex items-center gap-1.5 rounded-lg bg-slate-800 px-3 py-1.5 transition hover:bg-slate-700"
+            className="cursor-pointer flex items-center gap-1.5 rounded-lg bg-slate-800 px-3 py-1.5 transition hover:bg-slate-700"
           >
             <span className="text-base">💡</span>
             <span className="text-[10px] text-slate-400">提示</span>

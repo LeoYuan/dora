@@ -3,8 +3,9 @@ import { TwentyFourGame } from "./games/TwentyFourGame";
 import { SudokuGame } from "./games/SudokuGame";
 import { MinesweeperGame } from "./games/MinesweeperGame";
 import { Leaderboard } from "./games/Leaderboard";
+import { isTopScore, type LeaderboardData } from "../lib/leaderboard";
 
-type GameType = "24" | "sudoku" | "minesweeper";
+type GameType = keyof LeaderboardData;
 
 interface GamePanelProps {
   onClose: () => void;
@@ -13,6 +14,15 @@ interface GamePanelProps {
 export function GamePanel({ onClose }: GamePanelProps) {
   const [currentGame, setCurrentGame] = useState<GameType>("24");
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [newScore, setNewScore] = useState<{ time: number; difficulty?: string } | null>(null);
+
+  const handleGameComplete = (time: number, difficulty?: string) => {
+    // Check if score qualifies for top 20
+    if (isTopScore(currentGame, time)) {
+      setNewScore({ time, difficulty });
+      setShowLeaderboard(true);
+    }
+  };
 
   return (
     <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-slate-900/10">
@@ -34,7 +44,7 @@ export function GamePanel({ onClose }: GamePanelProps) {
             <button
               type="button"
               onClick={() => setCurrentGame("24")}
-              className={`rounded-md px-3 py-1.5 text-xs font-normal transition ${
+              className={`cursor-pointer rounded-md px-3 py-1.5 text-xs font-normal transition ${
                 currentGame === "24"
                   ? "bg-white text-purple-400"
                   : "bg-white/20 text-white/80 hover:bg-white/30"
@@ -45,7 +55,7 @@ export function GamePanel({ onClose }: GamePanelProps) {
             <button
               type="button"
               onClick={() => setCurrentGame("sudoku")}
-              className={`rounded-md px-3 py-1.5 text-xs font-normal transition ${
+              className={`cursor-pointer rounded-md px-3 py-1.5 text-xs font-normal transition ${
                 currentGame === "sudoku"
                   ? "bg-white text-purple-400"
                   : "bg-white/20 text-white/80 hover:bg-white/30"
@@ -56,7 +66,7 @@ export function GamePanel({ onClose }: GamePanelProps) {
             <button
               type="button"
               onClick={() => setCurrentGame("minesweeper")}
-              className={`rounded-md px-3 py-1.5 text-xs font-normal transition ${
+              className={`cursor-pointer rounded-md px-3 py-1.5 text-xs font-normal transition ${
                 currentGame === "minesweeper"
                   ? "bg-white text-purple-400"
                   : "bg-white/20 text-white/80 hover:bg-white/30"
@@ -71,7 +81,7 @@ export function GamePanel({ onClose }: GamePanelProps) {
             <button
               type="button"
               onClick={() => setShowLeaderboard(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm text-white backdrop-blur-sm transition-all hover:bg-white/20"
+              className="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm text-white backdrop-blur-sm transition-all hover:bg-white/20"
               aria-label="排行榜"
             >
               🏆
@@ -81,7 +91,7 @@ export function GamePanel({ onClose }: GamePanelProps) {
               type="button"
               aria-label="Close game panel"
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm text-white backdrop-blur-sm transition-all hover:bg-white/20"
+              className="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm text-white backdrop-blur-sm transition-all hover:bg-white/20"
             >
               ✕
             </button>
@@ -90,16 +100,20 @@ export function GamePanel({ onClose }: GamePanelProps) {
 
         {/* Game Content */}
         <div className="flex-1 overflow-hidden">
-          {currentGame === "24" && <TwentyFourGame />}
-          {currentGame === "sudoku" && <SudokuGame />}
-          {currentGame === "minesweeper" && <MinesweeperGame />}
+          {currentGame === "24" && <TwentyFourGame onComplete={handleGameComplete} />}
+          {currentGame === "sudoku" && <SudokuGame onComplete={handleGameComplete} />}
+          {currentGame === "minesweeper" && <MinesweeperGame onComplete={handleGameComplete} />}
         </div>
 
         {/* Leaderboard Modal */}
         {showLeaderboard && (
           <Leaderboard
             gameType={currentGame}
-            onClose={() => setShowLeaderboard(false)}
+            onClose={() => {
+              setShowLeaderboard(false);
+              setNewScore(null);
+            }}
+            newScore={newScore}
           />
         )}
       </div>

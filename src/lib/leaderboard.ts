@@ -65,3 +65,20 @@ export function formatDate(dateString: string): string {
     minute: "2-digit",
   });
 }
+
+// Check if a score would rank in top 20
+export function isTopScore(
+  gameType: keyof LeaderboardData,
+  time: number
+): boolean {
+  const leaderboard = getLeaderboard();
+  const scores = leaderboard[gameType];
+
+  // If less than 20 scores, any score qualifies
+  if (scores.length < MAX_ENTRIES) {
+    return true;
+  }
+
+  // Check if the new time is better than the 20th score
+  return time < scores[scores.length - 1].time;
+}

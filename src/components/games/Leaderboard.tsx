@@ -67,7 +67,7 @@ export function Leaderboard({ gameType, onClose, newScore }: LeaderboardProps) {
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm text-white backdrop-blur-sm transition-all hover:bg-white/20"
+            className="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm text-white backdrop-blur-sm transition-all hover:bg-white/20"
           >
             ✕
           </button>
@@ -80,7 +80,7 @@ export function Leaderboard({ gameType, onClose, newScore }: LeaderboardProps) {
               key={type}
               type="button"
               onClick={() => setActiveTab(type)}
-              className={`relative px-4 py-2 text-[13px] font-normal transition ${
+              className={`cursor-pointer relative px-4 py-2 text-[13px] font-normal transition ${
                 activeTab === type
                   ? "text-amber-500"
                   : "text-slate-300 hover:text-slate-400"
@@ -124,7 +124,7 @@ export function Leaderboard({ gameType, onClose, newScore }: LeaderboardProps) {
                 type="button"
                 onClick={handleSubmit}
                 disabled={!playerName.trim()}
-                className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-amber-600 disabled:bg-slate-300"
+                className="cursor-pointer rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-amber-600 disabled:bg-slate-300"
               >
                 提交
               </button>

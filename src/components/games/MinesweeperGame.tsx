@@ -77,7 +77,11 @@ function formatTime(seconds: number): string {
   return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 
-export function MinesweeperGame() {
+interface MinesweeperGameProps {
+  onComplete?: (time: number, difficulty?: string) => void;
+}
+
+export function MinesweeperGame({ onComplete }: MinesweeperGameProps) {
   const [game, setGame] = useState<GameState>(() => {
     const config = DIFFICULTY_CONFIG.easy;
     return {
@@ -178,6 +182,10 @@ export function MinesweeperGame() {
         const revealedCount = newBoard.flat().filter((c) => c.isRevealed).length;
         const totalCells = config.rows * config.cols;
         if (revealedCount === totalCells - config.mines) {
+          // Trigger onComplete callback when game is won
+          if (onComplete) {
+            onComplete(prev.elapsedTime, config.name);
+          }
           return { ...prev, board: newBoard, gameStatus: "won" };
         }
 
@@ -226,7 +234,7 @@ export function MinesweeperGame() {
               key={diff}
               type="button"
               onClick={() => newGame(diff)}
-              className={`rounded-lg px-3 py-1.5 text-sm font-normal transition ${
+              className={`cursor-pointer rounded-lg px-3 py-1.5 text-sm font-normal transition ${
                 game.difficulty === diff
                   ? "bg-sky-400 text-white"
                   : "border border-slate-200 bg-white text-slate-300 hover:bg-slate-50"
@@ -247,7 +255,7 @@ export function MinesweeperGame() {
               <button
                 type="button"
                 onClick={startGame}
-                className="rounded-xl bg-sky-500 px-8 py-4 text-lg font-medium text-white shadow-lg transition hover:bg-sky-600"
+                className="cursor-pointer rounded-xl bg-sky-500 px-8 py-4 text-lg font-medium text-white shadow-lg transition hover:bg-sky-600"
               >
                 开始游戏
               </button>
@@ -266,7 +274,7 @@ export function MinesweeperGame() {
                 <button
                   type="button"
                   onClick={() => newGame(game.difficulty)}
-                  className="mt-4 rounded-lg bg-sky-400 px-4 py-2 text-sm font-normal text-white transition hover:bg-sky-500"
+                  className="cursor-pointer mt-4 rounded-lg bg-sky-400 px-4 py-2 text-sm font-normal text-white transition hover:bg-sky-500"
                 >
                   再玩一次
                 </button>
@@ -289,7 +297,7 @@ export function MinesweeperGame() {
                   onClick={() => revealCell(rowIndex, colIndex)}
                   onContextMenu={(e) => toggleFlag(e, rowIndex, colIndex)}
                   className={`
-                    flex h-10 w-10 items-center justify-center text-sm font-medium
+                    cursor-pointer flex h-10 w-10 items-center justify-center text-sm font-medium
                     ${cell.isRevealed
                       ? cell.isMine
                         ? "bg-red-500 text-white"
