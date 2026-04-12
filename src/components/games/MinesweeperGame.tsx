@@ -286,7 +286,7 @@ export function MinesweeperGame({ onComplete }: MinesweeperGameProps) {
           <div
             className="grid gap-0.5 rounded-lg border-2 border-slate-400 bg-slate-400 p-0.5"
             style={{
-              gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))`,
+              gridTemplateColumns: `repeat(${config.cols}, ${config.cols > 16 ? 'minmax(28px, 32px)' : 'minmax(36px, 40px)'})`,
             }}
           >
             {game.board.map((row, rowIndex) =>
