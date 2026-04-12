@@ -428,7 +428,7 @@ export function TwentyFourGame() {
               type="button"
               onClick={() => selectCard(card.id)}
               disabled={game.cards.length === 1}
-              className={`flex h-14 w-14 items-center justify-center rounded-xl text-2xl font-bold transition-all ${
+              className={`flex h-32 w-32 items-center justify-center rounded-2xl text-4xl font-bold transition-all ${
                 isCardSelected(card.id)
                   ? "bg-amber-400 text-slate-900 shadow-lg shadow-amber-400/30 scale-105"
                   : "bg-amber-500 text-white shadow-lg shadow-amber-500/20 hover:bg-amber-400 hover:scale-105"
