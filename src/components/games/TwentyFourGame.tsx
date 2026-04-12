@@ -289,10 +289,13 @@ export function TwentyFourGame() {
         display: Number.isInteger(result) ? result.toString() : result.toFixed(2),
       };
 
-      // Remove used cards and add result
+      // Replace the two used cards with the result at the first card's position
+      // This prevents layout jumping
+      const firstCardIndex = game.cards.findIndex((c) => c.id === firstCard.id);
       const newCards = game.cards
-        .filter((c) => c.id !== firstCard.id && c.id !== card.id)
-        .concat(newCard);
+        .filter((c) => c.id !== firstCard.id && c.id !== card.id);
+      // Insert result at the first card's original position
+      newCards.splice(firstCardIndex, 0, newCard);
 
       // Check win condition
       if (newCards.length === 1) {
