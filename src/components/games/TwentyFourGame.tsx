@@ -428,7 +428,7 @@ export function TwentyFourGame() {
               type="button"
               onClick={() => selectCard(card.id)}
               disabled={game.cards.length === 1}
-              className={`flex h-24 w-24 items-center justify-center rounded-2xl text-4xl font-bold transition-all ${
+              className={`flex h-14 w-14 items-center justify-center rounded-xl text-2xl font-bold transition-all ${
                 isCardSelected(card.id)
                   ? "bg-amber-400 text-slate-900 shadow-lg shadow-amber-400/30 scale-105"
                   : "bg-amber-500 text-white shadow-lg shadow-amber-500/20 hover:bg-amber-400 hover:scale-105"
@@ -472,22 +472,22 @@ export function TwentyFourGame() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-4">
+        <div className="flex gap-3">
           <button
             type="button"
             onClick={newGame}
-            className="flex flex-col items-center gap-2 rounded-xl bg-slate-800 px-6 py-3 transition hover:bg-slate-700"
+            className="flex items-center gap-1.5 rounded-lg bg-slate-800 px-3 py-1.5 transition hover:bg-slate-700"
           >
-            <span className="text-2xl">🎮</span>
-            <span className="text-xs text-slate-400">新游戏</span>
+            <span className="text-base">🎮</span>
+            <span className="text-[10px] text-slate-400">新游戏</span>
           </button>
           <button
             type="button"
             onClick={showHint}
-            className="flex flex-col items-center gap-2 rounded-xl bg-slate-800 px-6 py-3 transition hover:bg-slate-700"
+            className="flex items-center gap-1.5 rounded-lg bg-slate-800 px-3 py-1.5 transition hover:bg-slate-700"
           >
-            <span className="text-2xl">💡</span>
-            <span className="text-xs text-slate-400">提示</span>
+            <span className="text-base">💡</span>
+            <span className="text-[10px] text-slate-400">提示</span>
           </button>
         </div>
       </div>
