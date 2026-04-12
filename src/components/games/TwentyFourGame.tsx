@@ -289,13 +289,19 @@ export function TwentyFourGame() {
         display: Number.isInteger(result) ? result.toString() : result.toFixed(2),
       };
 
-      // Replace the two used cards with the result at the first card's position
-      // This prevents layout jumping
-      const firstCardIndex = game.cards.findIndex((c) => c.id === firstCard.id);
-      const newCards = game.cards
-        .filter((c) => c.id !== firstCard.id && c.id !== card.id);
-      // Insert result at the first card's original position
-      newCards.splice(firstCardIndex, 0, newCard);
+      // Replace the two used cards with the result, keeping other cards in place
+      // First find the indices to determine which comes first
+      const firstIndex = game.cards.findIndex((c) => c.id === firstCard.id);
+      const secondIndex = game.cards.findIndex((c) => c.id === card.id);
+      const minIndex = Math.min(firstIndex, secondIndex);
+      const maxIndex = Math.max(firstIndex, secondIndex);
+
+      // Build new array: keep cards before minIndex, add result, keep cards after maxIndex
+      const newCards = [
+        ...game.cards.slice(0, minIndex),
+        newCard,
+        ...game.cards.slice(maxIndex + 1),
+      ];
 
       // Check win condition
       if (newCards.length === 1) {
