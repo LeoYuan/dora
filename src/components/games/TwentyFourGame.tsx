@@ -429,8 +429,8 @@ export function TwentyFourGame() {
           </div>
         )}
 
-        {/* Cards Grid */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Cards Grid - Fixed height to maintain 2x2 layout space */}
+        <div className="grid grid-cols-2 gap-4 h-[272px] content-start">
           {game.cards.map((card) => (
             <button
               key={card.id}
