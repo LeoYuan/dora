@@ -37,7 +37,7 @@ function canMake24(nums: number[]): boolean {
 function getSolution(nums: number[]): string | null {
   function solve(values: number[], exprs: string[]): string | null {
     if (values.length === 1) {
-      return Math.abs(values[0] - 24) < 0.0001 ? exprs[0] : null;
+      return values[0] === 24 ? exprs[0] : null;
     }
 
     for (let i = 0; i < values.length; i++) {
