@@ -2,6 +2,7 @@ import { useState } from "react";
 import { TwentyFourGame } from "./games/TwentyFourGame";
 import { SudokuGame } from "./games/SudokuGame";
 import { MinesweeperGame } from "./games/MinesweeperGame";
+import { SnakeGame } from "./games/SnakeGame";
 import { Leaderboard } from "./games/Leaderboard";
 import { isTopScore, type LeaderboardData } from "../lib/leaderboard";
 
@@ -74,6 +75,17 @@ export function GamePanel({ onClose }: GamePanelProps) {
             >
               扫雷
             </button>
+            <button
+              type="button"
+              onClick={() => setCurrentGame("snake")}
+              className={`cursor-pointer rounded-md px-3 py-1.5 text-xs font-normal transition ${
+                currentGame === "snake"
+                  ? "bg-white text-purple-400"
+                  : "bg-white/20 text-white/60 hover:bg-white/30 hover:text-white/80"
+              }`}
+            >
+              贪吃蛇
+            </button>
           </div>
 
           <div className="flex items-center gap-2">
@@ -103,6 +115,7 @@ export function GamePanel({ onClose }: GamePanelProps) {
           {currentGame === "24" && <TwentyFourGame onComplete={handleGameComplete} />}
           {currentGame === "sudoku" && <SudokuGame onComplete={handleGameComplete} />}
           {currentGame === "minesweeper" && <MinesweeperGame onComplete={handleGameComplete} />}
+          {currentGame === "snake" && <SnakeGame onComplete={handleGameComplete} />}
         </div>
 
         {/* Leaderboard Modal */}

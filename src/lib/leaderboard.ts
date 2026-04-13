@@ -9,6 +9,7 @@ export interface LeaderboardData {
   "24": Score[];
   sudoku: Score[];
   minesweeper: Score[];
+  snake: Score[];
 }
 
 const STORAGE_KEY = "dora-game-leaderboard";
@@ -23,7 +24,7 @@ export function getLeaderboard(): LeaderboardData {
   } catch {
     // ignore
   }
-  return { "24": [], sudoku: [], minesweeper: [] };
+  return { "24": [], sudoku: [], minesweeper: [], snake: [] };
 }
 
 export function saveScore(

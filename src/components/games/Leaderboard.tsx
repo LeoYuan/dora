@@ -22,6 +22,7 @@ const GAME_NAMES: Record<GameType, string> = {
   "24": "算24点",
   sudoku: "数独",
   minesweeper: "扫雷",
+  snake: "贪吃蛇",
 };
 
 export function Leaderboard({ gameType, onClose, newScore }: LeaderboardProps) {
